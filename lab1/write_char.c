@@ -47,18 +47,22 @@ void write_char_to_pins(char letter);
 
 int main() {
 
+  //Enable Peripherals
   SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOA); 
   SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOC); 
   SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOD);  
   SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOE);  
-  SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOF);     
+  SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOF);  
 
+    
+  //Start specific Pin Ports
   GPIOPinTypeGPIOOutput(port_A, GPIO_PIN_2 | GPIO_PIN_3 | GPIO_PIN_4); 
   GPIOPinTypeGPIOOutput(port_C, GPIO_PIN_4 | GPIO_PIN_5 | GPIO_PIN_6 | GPIO_PIN_7); 
   GPIOPinTypeGPIOOutput(port_D, GPIO_PIN_6); 
   GPIOPinTypeGPIOOutput(port_E, GPIO_PIN_0); 
   GPIOPinTypeGPIOOutput(port_F, GPIO_PIN_4); 
   
+  //Initialize the display
   initializeDisplay();
 }
 
@@ -133,7 +137,8 @@ void initializeDisplay() {
 
   //Entry mode set
   writeDataPins(0,0,0,0,0,1,1,0);
-
+  
+  start_write();
 
 
 
@@ -146,8 +151,24 @@ void start_write(){
 
   //Start to write move RS to High
   GPIOPinWrite(port_C, GPIO_PIN_5, pin_5);
+ 
+  write_char_to_pins('I');
+  write_char_to_pins('\'');
+  write_char_to_pins('M');
+  write_char_to_pins(' ');
+  
+  write_char_to_pins('A');
+  write_char_to_pins('L');
+  write_char_to_pins('I');
+  write_char_to_pins('V');
+  write_char_to_pins('E');
+  
+  
+  
 
-  write_char_to_pins('J');
+
+  
+ 
 
 }
 
@@ -156,19 +177,20 @@ void write_char_to_pins(char letter)
 {
 
 
-
+  //Convert the letter into binary
   int char_index = (letter- 'A') + 65;
   int binary[8];
   int i = 0;
   for(i = 0; i < 8; i ++)
   {
-    binary_array[i] = char_index %2;
+    binary[i] = char_index %2;
     char_index = char_index/2;
 
 
   }
-
-  writeDataPins(binary[0], binary[1], binary[2], binary[3], binary[4], binary[5], binary[6], binary[7]);
+  
+  //Write corresponding data to the pins with respect to the letters
+  writeDataPins(binary[7], binary[6], binary[5], binary[4], binary[3], binary[2], binary[1], binary[0]);
 
 }
 
