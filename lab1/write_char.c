@@ -149,23 +149,26 @@ void initializeDisplay() {
 
   //Function Set
   writeDataPins(0,0,1,1,1,0,0,0);
+  //Clear the screen
+  clear_screen();
 
-  //CLear Screen
-  writeDataPins(0,0,0,0,0,0,0,1);
-  
+  //Display on/off control
+  set_cursor();  
+
+  // //Entry mode set
+  // writeDataPins(0,0,0,0,0,1,1,0);
+}
+
+void set_cursor()
+{
   //Display on/off control
   writeDataPins(0,0,0,0,1,1,1,0);
   
-  //Entry mode set
-  writeDataPins(0,0,0,0,0,1,1,0);
 }
 
 //Clear the screen
 void clear_screen()
 {
-
-  //RS Low
- GPIOPinWrite(port_C, GPIO_PIN_5, 0x0);
 
  //Clear Display
  writeDataPins(0,0,0,0,0,0,0,1);
