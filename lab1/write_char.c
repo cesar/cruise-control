@@ -47,7 +47,7 @@ void write_char_to_pins(char letter);
 
 void write_phrases();
 
-int SIZE = 12;
+int SIZE = 16;
 int current_list_position = 0;
 
 char *phrases[] = { "Hello MAJ", 
@@ -59,9 +59,13 @@ char *phrases[] = { "Hello MAJ",
 "Luke, I am your-", 
 "MOTHERRRR", 
 "Yo momma so fat", 
-"erryone is worried", 
-"bout her diabeetus",
-"Diabetes"};
+"erryone is worry", 
+"bout her diabets",
+"Diabetes",
+"I wanna be",
+"the very best",
+"that no one",
+"ever was"};
 
 int main() {
 
