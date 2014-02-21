@@ -206,6 +206,7 @@ void write_phrases()
 
       clear_screen();
 
+      //Modulo for circular list, used to print the phrases in a circular fashion
       current_list_position += SIZE;
       current_list_position %= SIZE;
 
@@ -222,12 +223,14 @@ void write_phrases()
           write_char_to_pins(phrases[index][j]);
         }
               
-        //
+        //RS Low
         GPIOPinWrite(port_C, GPIO_PIN_5, 0x0);
 
+        //Next Display Line
         writeDataPins(1,1,0,0,0,0,0,0);
   
        }
+
       flag_check = 0;
     }
   }
@@ -256,8 +259,3 @@ void write_char_to_pins(char letter)
   writeDataPins(binary[7], binary[6], binary[5], binary[4], binary[3], binary[2], binary[1], binary[0]);
 
 }
-
-
-
-
-
