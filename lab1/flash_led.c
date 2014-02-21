@@ -11,6 +11,8 @@
 #include "driverlib/gpio.h" 
 
  
+//Using PB3 as the Output Pin
+
 
 uint8_t ui8PinData=0x08; //Note: To enable X pin, data to be sent needs to be 2^x in hexadecimal.
 
