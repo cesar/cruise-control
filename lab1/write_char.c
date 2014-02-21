@@ -45,6 +45,8 @@ void initializeDisplay();
 
 void write_char_to_pins(char letter);
 
+void start_write(char *string);
+
 int main() {
 
   //Enable Peripherals
@@ -64,6 +66,7 @@ int main() {
   
   //Initialize the display
   initializeDisplay();
+
 }
 
 
@@ -138,38 +141,21 @@ void initializeDisplay() {
   //Entry mode set
   writeDataPins(0,0,0,0,0,1,1,0);
   
-  start_write();
+  start_write("hello");
 
 
 
 }
 
-void start_write(){
-
-
-
+void start_write(char *string){
 
   //Start to write move RS to High
   GPIOPinWrite(port_C, GPIO_PIN_5, pin_5);
- 
-  write_char_to_pins('I');
-  write_char_to_pins('\'');
-  write_char_to_pins('M');
-  write_char_to_pins(' ');
   
-  write_char_to_pins('A');
-  write_char_to_pins('L');
-  write_char_to_pins('I');
-  write_char_to_pins('V');
-  write_char_to_pins('E');
+  for(int i = 0; i <= sizeof(string); i++) {
+    write_char_to_pins(string[i]);
+  } 
   
-  
-  
-
-
-  
- 
-
 }
 
 
