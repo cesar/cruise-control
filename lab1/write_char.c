@@ -2,6 +2,8 @@
 
 #include <stdbool.h> 
 
+#include <string.h>
+
 #include "inc/hw_memmap.h" 
 
 #include "inc/hw_types.h" 
@@ -20,8 +22,6 @@
 // DB2 -> PA4
 // DB1 -> PC7
 // DB0 -> PE0
-
-int lcd_mode = 0; //0 for initialization and 1 for writing
 
 uint32_t port_A = GPIO_PORTA_BASE;
 
@@ -45,7 +45,23 @@ void initializeDisplay();
 
 void write_char_to_pins(char letter);
 
-void start_write(char *string);
+void write_phrases();
+
+int SIZE = 12;
+int current_list_position = 0;
+
+char *phrases[] = { "Hello MAJ", 
+"Whats Up", 
+"I'm Alive", 
+"Well, well, well", 
+"Your base are", 
+"belong to us", 
+"Luke, I am your-", 
+"MOTHERRRR", 
+"Yo momma so fat", 
+"erryone is worried", 
+"bout her diabeetus",
+"Diabetes"};
 
 int main() {
 
@@ -56,7 +72,7 @@ int main() {
   SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOE);  
   SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOF);  
 
-    
+  
   //Start specific Pin Ports
   GPIOPinTypeGPIOOutput(port_A, GPIO_PIN_2 | GPIO_PIN_3 | GPIO_PIN_4); 
   GPIOPinTypeGPIOOutput(port_C, GPIO_PIN_4 | GPIO_PIN_5 | GPIO_PIN_6 | GPIO_PIN_7); 
@@ -64,8 +80,14 @@ int main() {
   GPIOPinTypeGPIOOutput(port_E, GPIO_PIN_0); 
   GPIOPinTypeGPIOOutput(port_F, GPIO_PIN_4); 
   
+  //Input Pins
+  GPIOPinTypeGPIOInput(port_F, GPIO_PIN_2 | GPIO_PIN_3);
+  
   //Initialize the display
   initializeDisplay();
+  
+  //Write phrases
+  write_phrases();
 
 }
 
@@ -118,47 +140,102 @@ void enableHL() {
 }
 
 
-
+//Display Initialization
 void initializeDisplay() {
 
-  //Wait more than 20ms after on sequence.
 
   //RS low
   GPIOPinWrite(port_C, GPIO_PIN_5, 0x0);
 
-  
   //Function Set
-  writeDataPins(0,0,1,1,0,0,0,0);
+  writeDataPins(0,0,1,1,1,0,0,0);
 
-  
   //CLear Screen
   writeDataPins(0,0,0,0,0,0,0,1);
   
   //Display on/off control
   writeDataPins(0,0,0,0,1,1,1,0);
   
-
   //Entry mode set
   writeDataPins(0,0,0,0,0,1,1,0);
-  
-  start_write("hello");
+}
 
+//Clear the screen
+void clear_screen()
+{
+
+  //RS Low
+ GPIOPinWrite(port_C, GPIO_PIN_5, 0x0);
+
+ //Clear Display
+ writeDataPins(0,0,0,0,0,0,0,1);
+ 
+}
+
+//Write the phrases to the LCD
+void write_phrases()
+{
+
+  int flag_check = 1;
+
+  while(1){
+
+
+  //Move List Up
+    if(!GPIOPinRead(port_F, GPIO_PIN_2))
+    {
+      current_list_position += 1;
+      
+      flag_check = 1;
+    }
+    
+    
+  //Move list down
+    else if(!GPIOPinRead(port_F, GPIO_PIN_3))
+    {  
+      current_list_position -= 1;
+      
+      flag_check = 1; 
+      
+    }  
+    
+    
+    if(flag_check == 1){
+
+      //RS High
+
+      clear_screen();
+
+      current_list_position += SIZE;
+      current_list_position %= SIZE;
+
+
+      int i, j, index;
+      for(i = current_list_position; i < current_list_position + 2 ; i ++)
+      { 
+        GPIOPinWrite(port_C, GPIO_PIN_5, pin_5);
+
+        index = i % SIZE;
+        for(j = 0; j < strlen(phrases[index]); j++)
+        {
+
+          write_char_to_pins(phrases[index][j]);
+        }
+              
+        //
+        GPIOPinWrite(port_C, GPIO_PIN_5, 0x0);
+
+        writeDataPins(1,1,0,0,0,0,0,0);
+  
+       }
+      flag_check = 0;
+    }
+  }
 
 
 }
 
-void start_write(char *string){
-
-  //Start to write move RS to High
-  GPIOPinWrite(port_C, GPIO_PIN_5, pin_5);
-  
-  for(int i = 0; i <= sizeof(string); i++) {
-    write_char_to_pins(string[i]);
-  } 
-  
-}
-
-
+//Convert a char and output into data pins
 void write_char_to_pins(char letter)
 {
 
