@@ -47,14 +47,17 @@ void write_char_to_pins(char letter);
 
 void write_phrases();
 
-void counter();
+void counter(int counter);
 
-void interrupt_handler(int *count);
+void interrupt_handler(void);
 
 void to_string(int number);
 
 int SIZE = 16;
 int current_list_position = 0;
+int count = 0;
+int flag = 1;
+
 
 char *phrases[] = { "Hello MAJ", 
 "Whats Up", 
@@ -89,24 +92,26 @@ int main() {
   GPIOPinTypeGPIOOutput(port_D, GPIO_PIN_6); 
   GPIOPinTypeGPIOOutput(port_E, GPIO_PIN_0); 
   GPIOPinTypeGPIOOutput(port_F, GPIO_PIN_4); 
+  GPIOPinTypeGPIOInput(port_F, GPIO_PIN_2 | GPIO_PIN_3);
+  
   
   //Enable pin for interrupt
-  GPIOIntEnable(GPIO_PORTF_BASE, GPIO_INT_PIN_2);
+  GPIOIntEnable(GPIO_PORTF_BASE, (GPIO_INT_PIN_2 | GPIO_INT_PIN_3));
+  
   
   //Set ISR
   GPIOIntRegister(GPIO_PORTF_BASE, interrupt_handler);
   
-  //Input Pins
-  GPIOPinTypeGPIOInput(port_F, GPIO_PIN_2 | GPIO_PIN_3);
+  //Set interrupt type
+  GPIOIntTypeSet(GPIO_PORTF_BASE, (GPIO_PIN_2 | GPIO_PIN_3) , GPIO_FALLING_EDGE);
   
   //Initialize the display
   initializeDisplay();
   
   //Write phrases
   //write_phrases();
-  int count = 0;
   //Count how many times a button is pressed
-  counter(&count);
+  while(1) {}
 
 }
 
@@ -196,24 +201,43 @@ void clear_screen()
 
 
 //Write the number of times a button has been pressed
-void counter(int *count) {
-  
-  int flag = 1;
+void counter(int counter) {
   
   //Write
   if(flag == 1) {
     
+    flag = 0;
+    
     //First clear the screen
     clear_screen();
     
-    //Switch RS to high
-    GPIOPinWrite(port_C, GPIO_PIN_5, pin_5);
-    char current = (char)(count + 48);
-    write_char_to_pins(current);
+    //Convert number to chars
+    char number[16] = {};
+    int i, current = counter, temp, len;
+    for(i = 0; i < 16; i++ ) {
+      temp = current % 10; //Give me the last digit
+      current = current / 10; //Crop out last digit
+      
+      number[i] = (char)(temp + 48);
+      
+      if(current == 0) {
+        len = i;
+        break;
+      }
+    }
     
-    GPIOPinWrite(port_C, GPIO_PIN_5, 0x0);
     
-    flag = 0;
+   for(i = len; i >= 0; i--) {
+     
+     //Switch RS to high
+     GPIOPinWrite(port_C, GPIO_PIN_5, pin_5);
+      
+     write_char_to_pins(number[i]);
+     
+     //RS low
+     GPIOPinWrite(port_C, GPIO_PIN_5, 0x0);
+     
+   } 
     
   }
 }
@@ -305,11 +329,18 @@ void write_char_to_pins(char letter)
 
 }
 
-void interrupt_handler(int *count)
+void interrupt_handler(void)
 {
-  GPIOIntClear(GPIO_PORTF_BASE, GPIO_PIN_2);
-
-  count++;
+  GPIOIntClear(GPIO_PORTF_BASE, GPIO_INT_PIN_2 | GPIO_INT_PIN_3);
+  
+  if(GPIOPinRead(port_F, GPIO_PIN_2) == 0x0) { 
+    count++;
+  } 
+  else if(GPIOPinRead(port_F, GPIO_PIN_3) == 0x0) {
+    count--;
+  }
+  counter(count);
+  flag = 1;
 }
 
-void to_string
+
