@@ -39,28 +39,18 @@ void writeDataPins(uint8_t db7, uint8_t db6, uint8_t db5, uint8_t db4, uint8_t d
 
 void enableHL();
 
-void resetPins();
-
 void initializeDisplay();
 
 void write_char_to_pins(char letter);
-
-void write_phrases();
 
 void counter(int counter);
 
 void interrupt_handler(void);
 
-void to_string(int number);
-
 int current_list_position = 0;
 int current_counter = 0;
 int count = 0;
 int flag = 1;
-
-int UP_FLAG = 0;
-int DOWN_FLAG = 0;
-
 
 int main() {
 
@@ -94,9 +84,6 @@ int main() {
   //Initialize the display
   initializeDisplay();
   
-  //Write phrases
-  //write_phrases();
-  //Count how many times a button is pressed
   while(1) {
       
   

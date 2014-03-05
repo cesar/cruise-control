@@ -55,7 +55,6 @@ void to_string(int number);
 
 int current_list_position = 0;
 int count = 0;
-int flag = 1;
 
 int UP_FLAG = 0;
 int DOWN_FLAG = 0;
@@ -97,7 +96,7 @@ int main() {
   //write_phrases();
   //Count how many times a button is pressed
   while(1) {
-    
+
     if(UP_FLAG)
     {
       UP_FLAG = 0;
@@ -115,10 +114,10 @@ int main() {
      count--;  
      counter(count);     
    }
+
    
-   
-   
-   
+
+
  }
 
 }
@@ -210,12 +209,12 @@ void clear_screen()
 
 //Write the number of times a button has been pressed
 void counter(int counter) {
-  
 
-  
+
+
     //First clear the screen
   clear_screen();
-  
+
     //Convert number to chars
   char number[16] = {};
   int i, current = counter, temp, len;
@@ -233,18 +232,18 @@ void counter(int counter) {
     
     
     for(i = len; i >= 0; i--) {
-     
+
      //Switch RS to high
      GPIOPinWrite(port_C, GPIO_PIN_5, pin_5);
-     
+
      write_char_to_pins(number[i]);
      
      //RS low
      GPIOPinWrite(port_C, GPIO_PIN_5, 0x0);
      
    } 
-   
-   
+
+
  }
 
 //Convert a char and output into data pins
