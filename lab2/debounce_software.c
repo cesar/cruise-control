@@ -39,21 +39,14 @@ void writeDataPins(uint8_t db7, uint8_t db6, uint8_t db5, uint8_t db4, uint8_t d
 
 void enableHL();
 
-void resetPins();
-
 void initializeDisplay();
 
 void write_char_to_pins(char letter);
-
-void write_phrases();
 
 void counter(int counter);
 
 void interrupt_handler(void);
 
-void to_string(int number);
-
-int current_list_position = 0;
 int count = 0;
 
 int UP_FLAG = 0;
