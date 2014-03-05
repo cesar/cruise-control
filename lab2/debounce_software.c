@@ -100,26 +100,26 @@ int main() {
     
     if(UP_FLAG)
     {
-       UP_FLAG = 0;
-      SysCtlDelay(800000);
       UP_FLAG = 0;
-      count++;      
+      SysCtlDelay(160000);
+      UP_FLAG = 0;
+      count++;    
       counter(count); 
     }
     
-        if(DOWN_FLAG)
+    else if(DOWN_FLAG)
     {
-       DOWN_FLAG = 0;
-      SysCtlDelay(800000);
-      DOWN_FLAG = 0;
-      count--;  
+     DOWN_FLAG = 0;
+     SysCtlDelay(160000);
+     DOWN_FLAG = 0;
+     count--;  
      counter(count);     
-    }
-    
+   }
    
-    
-  
-  }
+   
+   
+   
+ }
 
 }
 
@@ -212,14 +212,14 @@ void clear_screen()
 void counter(int counter) {
   
 
-    
+  
     //First clear the screen
-    clear_screen();
-    
+  clear_screen();
+  
     //Convert number to chars
-    char number[16] = {};
-    int i, current = counter, temp, len;
-    for(i = 0; i < 16; i++ ) {
+  char number[16] = {};
+  int i, current = counter, temp, len;
+  for(i = 0; i < 16; i++ ) {
       temp = current % 10; //Give me the last digit
       current = current / 10; //Crop out last digit
       
@@ -232,24 +232,24 @@ void counter(int counter) {
     }
     
     
-   for(i = len; i >= 0; i--) {
+    for(i = len; i >= 0; i--) {
      
      //Switch RS to high
      GPIOPinWrite(port_C, GPIO_PIN_5, pin_5);
-      
+     
      write_char_to_pins(number[i]);
      
      //RS low
      GPIOPinWrite(port_C, GPIO_PIN_5, 0x0);
      
    } 
-    
-  
-}
+   
+   
+ }
 
 //Convert a char and output into data pins
-void write_char_to_pins(char letter)
-{
+ void write_char_to_pins(char letter)
+ {
 
 
   //Convert the letter into binary
@@ -274,15 +274,15 @@ void interrupt_handler(void)
   GPIOIntClear(GPIO_PORTF_BASE, GPIO_INT_PIN_2 | GPIO_INT_PIN_3);
   
   if(GPIOPinRead(port_F, GPIO_PIN_2) == 0x0) { 
-      UP_FLAG = 1;    
+    UP_FLAG = 1;    
   } 
   else if(GPIOPinRead(port_F, GPIO_PIN_3) == 0x0) {
-      DOWN_FLAG = 1;
-    }
-    else{
+    DOWN_FLAG = 1;
+  }
+  else{
 
-      UP_FLAG = DOWN_FLAG = 0;
-    }
+    UP_FLAG = DOWN_FLAG = 0;
+  }
 }
 
 
