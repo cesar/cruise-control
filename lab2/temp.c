@@ -53,28 +53,14 @@ void interrupt_handler(void);
 
 void to_string(int number);
 
-int SIZE = 16;
 int current_list_position = 0;
+int current_counter = 0;
 int count = 0;
 int flag = 1;
 
+int UP_FLAG = 0;
+int DOWN_FLAG = 0;
 
-char *phrases[] = { "Hello MAJ", 
-"Whats Up", 
-"I'm Alive", 
-"Well, well, well", 
-"Your base are", 
-"belong to us", 
-"Luke, I am your-", 
-"MOTHERRRR", 
-"Yo momma so fat", 
-"erryone is worry", 
-"bout her diabets",
-"Diabetes",
-"I wanna be",
-"the very best",
-"that no one",
-"ever was"};
 
 int main() {
 
@@ -111,7 +97,10 @@ int main() {
   //Write phrases
   //write_phrases();
   //Count how many times a button is pressed
-  while(1) {}
+  while(1) {
+      
+  
+  }
 
 }
 
@@ -203,10 +192,7 @@ void clear_screen()
 //Write the number of times a button has been pressed
 void counter(int counter) {
   
-  //Write
-  if(flag == 1) {
-    
-    flag = 0;
+
     
     //First clear the screen
     clear_screen();
@@ -239,72 +225,7 @@ void counter(int counter) {
      
    } 
     
-  }
-}
-//Write the phrases to the LCD
-void write_phrases()
-{
-
-  int flag_check = 1;
-
-  while(1){
-
-
-  //Move List Up
-    if(!GPIOPinRead(port_F, GPIO_PIN_2))
-    {
-      current_list_position += 1;
-      
-      flag_check = 1;
-    }
-    
-    
-  //Move list down
-    else if(!GPIOPinRead(port_F, GPIO_PIN_3))
-    {  
-      current_list_position -= 1;
-      
-      flag_check = 1; 
-      
-    }  
-    
-    
-    if(flag_check == 1){
-
-      //RS High
-
-      clear_screen();
-
-      //Modulo for circular list, used to print the phrases in a circular fashion
-      current_list_position += SIZE;
-      current_list_position %= SIZE;
-
-
-      int i, j, index;
-      for(i = current_list_position; i < current_list_position + 2 ; i ++)
-      { 
-        GPIOPinWrite(port_C, GPIO_PIN_5, pin_5);
-
-        index = i % SIZE;
-        for(j = 0; j < strlen(phrases[index]); j++)
-        {
-
-          write_char_to_pins(phrases[index][j]);
-        }
-              
-        //RS Low
-        GPIOPinWrite(port_C, GPIO_PIN_5, 0x0);
-
-        //Next Display Line
-        writeDataPins(1,1,0,0,0,0,0,0);
   
-       }
-
-      flag_check = 0;
-    }
-  }
-
-
 }
 
 //Convert a char and output into data pins
@@ -334,13 +255,15 @@ void interrupt_handler(void)
   GPIOIntClear(GPIO_PORTF_BASE, GPIO_INT_PIN_2 | GPIO_INT_PIN_3);
   
   if(GPIOPinRead(port_F, GPIO_PIN_2) == 0x0) { 
-    count++;
+      count++;
   } 
   else if(GPIOPinRead(port_F, GPIO_PIN_3) == 0x0) {
-    count--;
-  }
-  counter(count);
-  flag = 1;
+      count--;
+    }
+
+        counter(count);
+
+  
 }
 
 
