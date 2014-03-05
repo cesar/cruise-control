@@ -61,6 +61,7 @@ int SIZE = 16;
 int current_list_position = 0;
 int count = 0;
 int flag = 1;
+int current_state_a, current_state_b, previous_state_a = -1, previous_state_b = -1;
 
 
 char *phrases[] = { "Hello MAJ", 
@@ -107,7 +108,7 @@ int main() {
   GPIOIntRegister(GPIO_PORTF_BASE, scrolling_wheel);
   
   //Set interrupt type
-  GPIOIntTypeSet(GPIO_PORTF_BASE, (GPIO_PIN_2 | GPIO_PIN_3) , GPIO_FALLING_EDGE | GPIO_RISING_EDGE);
+  GPIOIntTypeSet(GPIO_PORTF_BASE, (GPIO_PIN_2 | GPIO_PIN_3) , GPIO_BOTH_EDGES);
   
   //Initialize the display
   initializeDisplay();
@@ -248,32 +249,8 @@ void counter(int counter) {
 //Write the phrases to the LCD
 void write_phrases()
 {
-
-  int flag_check = 1;
-
-  while(1){
-
-
-  //Move List Up
-    if(!GPIOPinRead(port_F, GPIO_PIN_2))
-    {
-      current_list_position += 1;
-      
-      flag_check = 1;
-    }
     
-    
-  //Move list down
-    else if(!GPIOPinRead(port_F, GPIO_PIN_3))
-    {  
-      current_list_position -= 1;
-      
-      flag_check = 1; 
-      
-    }  
-    
-    
-    if(flag_check == 1){
+    if(flag == 1){
 
       //RS High
 
@@ -304,11 +281,8 @@ void write_phrases()
   
        }
 
-      flag_check = 0;
+      flag = 0;
     }
-  }
-
-
 }
 
 //Convert a char and output into data pins
@@ -351,10 +325,12 @@ void scrolling_wheel(void) {
   
   //Pin PF2 represents A and Pin PF3 represents B
   
-  int codex[] = { 0, 1, -1, 0, -1, 0, 0, 1, 1, 0, 0, -1, 0, -1, 1, 0};
-  int current_state_a, current_state_b, previous_state_a = -1, previous_state_b = -1, temp_binary;
-  
   GPIOIntClear(GPIO_PORTF_BASE, GPIO_INT_PIN_2 | GPIO_INT_PIN_3);
+
+  
+  int codex[] = { 0, 1, -1, 0, -1, 0, 0, 1, 1, 0, 0, -1, 0, -1, 1, 0};
+  int temp_binary;
+  
   
   //Get a snapshot of the current state of the wheel positions
   if(GPIOPinRead(port_F, GPIO_PIN_2) == 0x0 && GPIOPinRead(port_F, GPIO_PIN_3) == 0x0) {
@@ -362,19 +338,20 @@ void scrolling_wheel(void) {
     current_state_b = 0;
     //count = 1;
   }
-  if(GPIOPinRead(port_F, GPIO_PIN_2) == 0x4 && GPIOPinRead(port_F, GPIO_PIN_3) == 0x0) {
+  else if(GPIOPinRead(port_F, GPIO_PIN_2) == 0x4 && GPIOPinRead(port_F, GPIO_PIN_3) == 0x0) {
     current_state_a = 1;
     current_state_b = 0;
     //count = 3;
   }
-  if(GPIOPinRead(port_F, GPIO_PIN_2) == 0x0 && GPIOPinRead(port_F, GPIO_PIN_3) == 0x8) {
+  else if(GPIOPinRead(port_F, GPIO_PIN_2) == 0x0 && GPIOPinRead(port_F, GPIO_PIN_3) == 0x8) {
     current_state_a = 0;
     current_state_b = 1;
     //count = 4;
   }
-  if(GPIOPinRead(port_F, GPIO_PIN_2) == 0x4 && GPIOPinRead(port_F, GPIO_PIN_3) == 0x8) {
+  else if(GPIOPinRead(port_F, GPIO_PIN_2) == 0x4 && GPIOPinRead(port_F, GPIO_PIN_3) == 0x8) {
     current_state_a = 1;
     current_state_b = 1;
+    //count = 2;
   }
   
   if(previous_state_a != -1 && previous_state_b != -1) {
@@ -382,17 +359,19 @@ void scrolling_wheel(void) {
     //Proper order should be PrevA PrevB NewA NewB
     temp_binary = (pow(2, 3) * previous_state_a) + (pow(2, 2) * previous_state_b) + (pow(2, 1) * current_state_a) + (pow(2, 0) * current_state_b);
     
-    count = count + codex[temp_binary];
+    current_list_position = current_list_position + codex[temp_binary];
     
   }
   
   previous_state_a = current_state_a;
   previous_state_b = current_state_b;
   
-  counter(count);
+  //Counter function
+  //counter(count);
+  
+  //Phrases Function
+  write_phrases();
+  
   flag = 1;
 }
-
-
-
 
