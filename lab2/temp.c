@@ -86,9 +86,8 @@ int main() {
   
   while(1) {
       
-  
+    counter(count);
   }
-
 }
 
 
@@ -181,36 +180,39 @@ void counter(int counter) {
   
 
     
-    //First clear the screen
-    clear_screen();
-    
-    //Convert number to chars
-    char number[16] = {};
-    int i, current = counter, temp, len;
-    for(i = 0; i < 16; i++ ) {
-      temp = current % 10; //Give me the last digit
-      current = current / 10; //Crop out last digit
+  if(flag ==1) {  //First clear the screen
+      clear_screen();
       
-      number[i] = (char)(temp + 48);
-      
-      if(current == 0) {
-        len = i;
-        break;
+      //Convert number to chars
+      char number[16] = {};
+      int i, current = counter, temp, len;
+      for(i = 0; i < 16; i++ ) {
+        temp = current % 10; //Give me the last digit
+        current = current / 10; //Crop out last digit
+        
+        number[i] = (char)(temp + 48);
+        
+        if(current == 0) {
+          len = i;
+          break;
+        }
       }
-    }
-    
-    
-   for(i = len; i >= 0; i--) {
-     
-     //Switch RS to high
-     GPIOPinWrite(port_C, GPIO_PIN_5, pin_5);
       
-     write_char_to_pins(number[i]);
-     
-     //RS low
-     GPIOPinWrite(port_C, GPIO_PIN_5, 0x0);
-     
-   } 
+      
+     for(i = len; i >= 0; i--) {
+       
+       //Switch RS to high
+       GPIOPinWrite(port_C, GPIO_PIN_5, pin_5);
+        
+       write_char_to_pins(number[i]);
+       
+       //RS low
+       GPIOPinWrite(port_C, GPIO_PIN_5, 0x0);
+       
+     } 
+
+     flag  = 0;
+   }
     
   
 }
@@ -248,9 +250,7 @@ void interrupt_handler(void)
       count--;
     }
 
-        counter(count);
-
-  
+    flag = 1;
 }
 
 
