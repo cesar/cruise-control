@@ -47,10 +47,8 @@ void counter(int counter);
 
 void interrupt_handler(void);
 
-int current_list_position = 0;
-int current_counter = 0;
+int counter_count= 0;
 int count = 0;
-int flag = 1;
 
 int main() {
 
@@ -85,8 +83,31 @@ int main() {
   initializeDisplay();
   
   while(1) {
-      
-  
+
+
+     if(counter_count != count){
+
+      clear_screen();
+      GPIOPinWrite(port_C, GPIO_PIN_5, pin_5);
+
+      write_char_to_pins((char)(((int)'0')+count % 10));
+
+      counter_count = count;
+
+
+
+    }
+    GPIOPinWrite(port_C, GPIO_PIN_5, 0x0);
+
+
+    //Keep the range in numbers by transferring negative numbers to 9
+    if(count < 0)
+    {
+      count = 9;
+    }
+
+
+
   }
 
 }
@@ -155,8 +176,8 @@ void initializeDisplay() {
   //Display on/off control
   set_cursor();  
 
-  // //Entry mode set
-  // writeDataPins(0,0,0,0,0,1,1,0);
+  //Entry mode set
+  writeDataPins(0,0,0,0,0,1,1,0);
 }
 
 void set_cursor()
@@ -174,50 +195,11 @@ void clear_screen()
  writeDataPins(0,0,0,0,0,0,0,1);
  
 }
-
-
-//Write the number of times a button has been pressed
-void counter(int counter) {
-  
-
-    
-    //First clear the screen
-    clear_screen();
-    
-    //Convert number to chars
-    char number[16] = {};
-    int i, current = counter, temp, len;
-    for(i = 0; i < 16; i++ ) {
-      temp = current % 10; //Give me the last digit
-      current = current / 10; //Crop out last digit
-      
-      number[i] = (char)(temp + 48);
-      
-      if(current == 0) {
-        len = i;
-        break;
-      }
-    }
-    
-    
-   for(i = len; i >= 0; i--) {
-     
-     //Switch RS to high
-     GPIOPinWrite(port_C, GPIO_PIN_5, pin_5);
-      
-     write_char_to_pins(number[i]);
-     
-     //RS low
-     GPIOPinWrite(port_C, GPIO_PIN_5, 0x0);
-     
-   } 
-    
-  
-}
+ 
 
 //Convert a char and output into data pins
-void write_char_to_pins(char letter)
-{
+ void write_char_to_pins(char letter)
+ {
 
 
   //Convert the letter into binary
@@ -241,16 +223,16 @@ void interrupt_handler(void)
 {
   GPIOIntClear(GPIO_PORTF_BASE, GPIO_INT_PIN_2 | GPIO_INT_PIN_3);
   
+
   if(GPIOPinRead(port_F, GPIO_PIN_2) == 0x0) { 
-      count++;
+    count++;
   } 
   else if(GPIOPinRead(port_F, GPIO_PIN_3) == 0x0) {
-      count--;
-    }
+    count--;
+  }
 
-        counter(count);
+
 
   
 }
-
 

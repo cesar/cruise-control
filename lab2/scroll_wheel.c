@@ -64,7 +64,7 @@ int flag = 1;
 int current_state_a, current_state_b, previous_state_a = -1, previous_state_b = -1;
 
 
-char *phrases[] = { "Hello MAJ", 
+char *phrases[] = { "Hello World!", 
 "Whats Up", 
 "I'm Alive", 
 "Well, well, well", 
