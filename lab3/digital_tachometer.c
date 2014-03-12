@@ -62,28 +62,7 @@ int count = 0;
 int flag = 1;
 int frequency = 160000;
 int current_state_a, current_state_b, previous_state_a = -1, previous_state_b = -1, time_a, time_b, direction;
-
-
-char *phrases[] = { "Hello World!", 
-"Whats Up", 
-"I'm Alive", 
-"Well, well, well", 
-"Your base are", 
-"belong to us", 
-"Luke, I am your-", 
-"MOTHERRRR", 
-"Yo momma so fat", 
-"erryone is worry", 
-"bout her diabets",
-"Diabetes",
-"I wanna be",
-"the very best",
-"that no one",
-"ever was"};
-
-char *first_line = "Speed = ### RPM";
-char *counter_clockwise = "Counter-clockwise";
-char *clockwise = "Clockwise";
+int direction_change = 0, speed_change = 0, current_direction = 0;
 
 int main() {
 
@@ -125,12 +104,15 @@ int main() {
   //Write phrases
   //write_phrases();
   //Count how many times a button is pressed
+  //RS High
+  GPIOPinWrite(port_C, GPIO_PIN_5, pin_5);
+  write_string("Speed = ### RPM");
   while(1) { taco_display(); }
 
 }
 
 void the_taco_meter(void) {
-  
+
   //Clear
   GPIOIntClear(GPIO_PORTF_BASE, GPIO_INT_PIN_2 | GPIO_INT_PIN_3);
 
@@ -174,6 +156,14 @@ void the_taco_meter(void) {
       //Direction is counter-clockwise
       direction = -1;
     } 
+
+    if(direction != current_direction)
+    {
+      direction_change = 1;
+      current_direction = direction;
+    }
+
+
     
   }
 
@@ -183,132 +173,158 @@ void the_taco_meter(void) {
   previous_state_b = current_state_b;
 }
 
+void change_direction_LCD(int direction)
+{
+
+    //RS Low
+  GPIOPinWrite(port_C, GPIO_PIN_5, 0x0);
+
+    //Next Display Line
+  writeDataPins(1,1,0,0,0,0,0,0);
+
+  if(current_direction == 1)
+  {
+    GPIOPinWrite(port_C, GPIO_PIN_5, pin_5);
+    write_string("CWise  ");
+  }
+
+  if(current_direction == -1)
+  {
+    GPIOPinWrite(port_C, GPIO_PIN_5, pin_5);
+    write_string("CCWise ");
+
+  }
+  GPIOPinWrite(port_C, GPIO_PIN_5, 0x0);
+
+
+}
+
 void taco_display(void) {
-  
-  int i;
+
   //Write to LCD
   if (flag == 1) {
-    clear_screen();
 
-    //RS High
-    GPIOPinWrite(port_C, GPIO_PIN_5, pin_5);
-    for(i = 0; i < strlen(first_line); i++) { write_char_to_pins(first_line[i]); }
-    //RS Low
-    GPIOPinWrite(port_C, GPIO_PIN_5, 0x0);
 
-    writeDataPins(1,1,0,0,0,0,0,0);
+    if(direction_change)
+    { 
+      direction_change = 0;
+      SysCtlDelay(160000);
+      direction_change = 0;
+      change_direction_LCD(direction);
 
-    if (direction == 1) {
-      //RS High
-      GPIOPinWrite(port_C, GPIO_PIN_5, pin_5);
-      for(i = 0; i < strlen(clockwise); i++) { write_char_to_pins(clockwise[i]); }
-      //RS Low
-      GPIOPinWrite(port_C, GPIO_PIN_5, 0x0);
     }
 
-    else if (direction == -1 ) {
-      //RS High
-      GPIOPinWrite(port_C, GPIO_PIN_5, pin_5);
-      for(i = 0; i < strlen(counter_clockwise); i++) { write_char_to_pins(counter_clockwise[i]); }
-      //RS Low
-      GPIOPinWrite(port_C, GPIO_PIN_5, 0x0);
+    if(speed_change)
+    {
+      GPIOPinWrite(port_F, GPIO_PIN_5, 0x0);
+      writeDataPins(1,0,0,0,1,0,0,1);
+
+      GPIOPinWrite(port_F, GPIO_PIN_5, pin_5);
+
+        write_string(""); //Wrtie some speed
+        writeDataPins(1,0,0,0,1,0,0,1);
+
+      }
+
+
+
+
     }
+    flag = 0;
   }
-  flag = 0;
-}
 
 
 
 
-void writeDataPins(uint8_t db7, uint8_t db6, uint8_t db5, uint8_t db4, uint8_t db3, uint8_t db2, uint8_t db1, uint8_t db0) {
+  void writeDataPins(uint8_t db7, uint8_t db6, uint8_t db5, uint8_t db4, uint8_t db3, uint8_t db2, uint8_t db1, uint8_t db0) {
 
   //DB7
-  GPIOPinWrite(port_F, GPIO_PIN_4, db7 * pin_4);
+    GPIOPinWrite(port_F, GPIO_PIN_4, db7 * pin_4);
 
   //DB6
-  GPIOPinWrite(port_A, GPIO_PIN_2, db6 * pin_2);
+    GPIOPinWrite(port_A, GPIO_PIN_2, db6 * pin_2);
 
   //DB5
-  GPIOPinWrite(port_C, GPIO_PIN_4, db5 * pin_4);
+    GPIOPinWrite(port_C, GPIO_PIN_4, db5 * pin_4);
 
   //DB4
-  GPIOPinWrite(port_A, GPIO_PIN_3, db4 * pin_3);
+    GPIOPinWrite(port_A, GPIO_PIN_3, db4 * pin_3);
 
   //DB3
-  GPIOPinWrite(port_D, GPIO_PIN_6, db3 * pin_6);
+    GPIOPinWrite(port_D, GPIO_PIN_6, db3 * pin_6);
 
   //DB2
-  GPIOPinWrite(port_A, GPIO_PIN_4, db2 * pin_4);
+    GPIOPinWrite(port_A, GPIO_PIN_4, db2 * pin_4);
 
   //DB1
-  GPIOPinWrite(port_C, GPIO_PIN_7, db1 * pin_7);
+    GPIOPinWrite(port_C, GPIO_PIN_7, db1 * pin_7);
 
   //DB0
-  GPIOPinWrite(port_E, GPIO_PIN_0, db0 * pin_0);
-  
-  //Turn On The Clock to activate the commmand
-  enableHL();
+    GPIOPinWrite(port_E, GPIO_PIN_0, db0 * pin_0);
 
-}
+  //Turn On The Clock to activate the commmand
+    enableHL();
+
+  }
 
 //Toggle of the enable line
-void enableHL() {
+  void enableHL() {
 
   //Enable high
-  GPIOPinWrite(port_C, GPIO_PIN_6, pin_6);
-  
+    GPIOPinWrite(port_C, GPIO_PIN_6, pin_6);
+
    //Wait 5ms
-  SysCtlDelay(130000);
-  
+    SysCtlDelay(130000);
+
   //Enable low
-  GPIOPinWrite(port_C, GPIO_PIN_6, 0x0);
-  
+    GPIOPinWrite(port_C, GPIO_PIN_6, 0x0);
+
    //Wait 5ms
-  SysCtlDelay(130000);
-}
+    SysCtlDelay(130000);
+  }
 
 
 //Display Initialization
-void initializeDisplay() {
+  void initializeDisplay() {
 
   //RS low
-  GPIOPinWrite(port_C, GPIO_PIN_5, 0x0);
+    GPIOPinWrite(port_C, GPIO_PIN_5, 0x0);
 
   //Function Set
-  writeDataPins(0,0,1,1,1,0,0,0);
+    writeDataPins(0,0,1,1,1,0,0,0);
   //Clear the screen
-  clear_screen();
+    clear_screen();
 
   //Display on/off control
-  set_cursor();  
+    set_cursor();  
 
   // //Entry mode set
   // writeDataPins(0,0,0,0,0,1,1,0);
-}
+  }
 
-void set_cursor()
-{
+  void set_cursor()
+  {
   //Display on/off control
-  writeDataPins(0,0,0,0,1,1,1,0);
-  
-}
+    writeDataPins(0,0,0,0,1,1,1,0);
+
+  }
 
 //Clear the screen
-void clear_screen()
-{
+  void clear_screen()
+  {
 
  //Clear Display
- writeDataPins(0,0,0,0,0,0,0,1);
- 
-}
+   writeDataPins(0,0,0,0,0,0,0,1);
+
+ }
 
 
 //Write the number of times a button has been pressed
-void counter(int counter) {
-  
+ void counter(int counter) {
+
   //Write
   if(flag == 1) {
-    
+
     flag = 0;
     
     //First clear the screen
@@ -330,57 +346,19 @@ void counter(int counter) {
     }
     
     
-   for(i = len; i >= 0; i--) {
-     
+    for(i = len; i >= 0; i--) {
+
      //Switch RS to high
      GPIOPinWrite(port_C, GPIO_PIN_5, pin_5);
-      
+
      write_char_to_pins(number[i]);
      
      //RS low
      GPIOPinWrite(port_C, GPIO_PIN_5, 0x0);
      
    } 
-    
-  }
-}
-//Write the phrases to the LCD
-void write_phrases()
-{
-    
-    if(flag == 1){
 
-      //RS High
-
-      clear_screen();
-
-      //Modulo for circular list, used to print the phrases in a circular fashion
-      current_list_position += SIZE;
-      current_list_position %= SIZE;
-
-
-      int i, j, index;
-      for(i = current_list_position; i < current_list_position + 2 ; i ++)
-      { 
-        GPIOPinWrite(port_C, GPIO_PIN_5, pin_5);
-
-        index = i % SIZE;
-        for(j = 0; j < strlen(phrases[index]); j++)
-        {
-
-          write_char_to_pins(phrases[index][j]);
-        }
-              
-        //RS Low
-        GPIOPinWrite(port_C, GPIO_PIN_5, 0x0);
-
-        //Next Display Line
-        writeDataPins(1,1,0,0,0,0,0,0);
-  
-       }
-
-      flag = 0;
-    }
+ }
 }
 
 //Convert a char and output into data pins
@@ -402,6 +380,16 @@ void write_char_to_pins(char letter)
 
 }
 
+//Writes strings to the screen
+void write_string(char *string)
+{
+
+  int i = 0;
+  for(i = 0; i < strlen(string) ; i++)
+  {
+    write_char_to_pins(string[i]);
+  }
+}
 void interrupt_handler(void)
 {
   GPIOIntClear(GPIO_PORTF_BASE, GPIO_INT_PIN_2 | GPIO_INT_PIN_3);
@@ -417,9 +405,9 @@ void interrupt_handler(void)
 }
 
 void scrolling_wheel(void) {
-  
+
   //Pin PF2 represents A and Pin PF3 represents B
-  
+
   GPIOIntClear(GPIO_PORTF_BASE, GPIO_INT_PIN_2 | GPIO_INT_PIN_3);
 
   

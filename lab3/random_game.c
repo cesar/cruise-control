@@ -84,6 +84,8 @@ random_number = get_random_number();
 
 while(1)
 {	
+
+
 	//Displays the message to receive user input
 	if(ask_user_input)
 	{
@@ -93,6 +95,7 @@ while(1)
 		write_string("Input #: ");
 
 	}
+
 
 	//Increases the user guess by 1
 	else if(up_flag)
@@ -141,6 +144,9 @@ while(1)
 	if(game_mode_on)
 	{	
 		game_mode_on = 0;
+		SysCtlDelay(160000);
+		game_mode_on = 0;
+
 		 //RS Low
 		GPIOPinWrite(port_C, GPIO_PIN_5, 0x0);
 
@@ -162,7 +168,7 @@ while(1)
 
 			if(user_guess == random_number)
 			{
-				write_string("You Win!");
+				write_string("You Win!       ");
 
 				restart_game();
 			}
@@ -330,6 +336,7 @@ void interrupt_handler(void)
 	if(GPIOPinRead(port_F, GPIO_PIN_2) == 0x0 && GPIOPinRead(port_F, GPIO_PIN_3) == 0x0) { 
 		game_mode_on = 1;
 
+
 	} 
 
 	//Up Switch
@@ -344,5 +351,6 @@ void interrupt_handler(void)
 
 	} 
 
+	
 }
 
