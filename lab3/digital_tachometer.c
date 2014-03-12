@@ -60,11 +60,13 @@ int SIZE = 16;
 int current_list_position = 0;
 int count = 0;
 int flag = 1;
-int frequency = 160000;
-int current_state_a, current_state_b, previous_state_a = -1, previous_state_b = -1, time_a, time_b, direction;
+int frequency = 16000000;
+int current_state_a, current_state_b, previous_state_a = -1, previous_state_b = -1, time_a, time_b, direction = 0;
 int direction_change = 0, speed_change = 0, current_direction = 0;
 float t1 = 0, t2 = 0, current_rpm, delta;
 int initial_run = 1;
+char rpm[4];
+
 int main() {
 
   //Enable Peripherals
@@ -103,12 +105,12 @@ int main() {
   //Initialize the display
   initializeDisplay();
   
-  //Write phrases
-  //write_phrases();
-  //Count how many times a button is pressed
+  
   //RS High
   GPIOPinWrite(port_C, GPIO_PIN_5, pin_5);
   write_string("Speed = #### RPM");
+
+  
   while(1) { taco_display(); }
 
 }
@@ -167,41 +169,20 @@ void the_taco_meter(void) {
 
     
       //jump initial value
-      t1 = t2;
+    t1 = t2;
       //Get the current speed
-      t2 = TimerValueGet(TIMER0_BASE, TIMER_A) %60;
+    t2 = TimerValueGet(TIMER0_BASE, TIMER_A) %60;
       //conversion
-      t2 = t2 * (6.25) * pow(10, -8);
-      delta = t2 - t1;
-      if(delta < 0){
-        delta +=60;
-      }
-      current_rpm = (1.0/24) / (delta);
-      current_rpm = current_rpm / 60.0;
-      if(current_rpm > 999)
-      {
-        current_rpm = 999;
-      }
+    t2 = t2 * (6.25) * pow(10, -8);
+    delta = t2 - t1;
+    if(delta < 0){
+      delta +=60;
+    }
+    current_rpm = (1.0/24) / (delta);
+    current_rpm = current_rpm / 60.0;
+  
+    speed_change = 1;
 
-      speed_change = 1;
-      // GPIOPinWrite(port_F, GPIO_PIN_5, pin_5);
-      // write_char_to_pins((char)((int)'0') + (int) current_rpm);
-      // GPIOPinWrite(port_F, GPIO_PIN_5, 0x0);
-
-      // clear_screen();
-      // // GPIOPinWrite(port_C, GPIO_PIN_5, 0x0);
-      // //   writeDataPins(1,0,0,0,0,0,0,0);
-      // // writeDataPins(1,0,0,0,1,0,0,1);
-
-      // GPIOPinWrite(port_F, GPIO_PIN_5, pin_5);
-
-      // write_char_to_pins((char)((int)'0') + (int) current_rpm);
-      //  // writeDataPins(1,0,0,0,1,0,0,1);
-
-      // GPIOPinWrite(port_F, GPIO_PIN_5, 0x0);
-
-
-    
   }
 
   flag = 1;
@@ -257,158 +238,106 @@ void taco_display(void) {
       speed_change = 0;
       SysCtlDelay(160000);
 
+      writeDataPins(1,0,0,0,1,0,0,0);      
+      sprintf(rpm, "%f", current_rpm);
 
-      
-
-     //GPIOPinWrite(port_C, GPIO_PIN_5, pin_5);
-
-      //write_char_to_pins((char)(((int) '0') + 123)); //Wrtie some speed
-      counter((int)(current_rpm));
-
-      // GPIOPinWrite(port_C, GPIO_PIN_5, 0x0);
-
-      //   writeDataPins(1,0,0,0,1,0,0,1);
-
-      }
-
-
+      GPIOPinWrite(port_C, GPIO_PIN_5, pin_5);
+      write_string(rpm);
 
 
     }
 
-          GPIOPinWrite(port_C, GPIO_PIN_5, 0x0);
 
-    flag = 0;
+
+
   }
 
+  GPIOPinWrite(port_C, GPIO_PIN_5, 0x0);
+
+  flag = 0;
+}
 
 
-
-  void writeDataPins(uint8_t db7, uint8_t db6, uint8_t db5, uint8_t db4, uint8_t db3, uint8_t db2, uint8_t db1, uint8_t db0) {
+void writeDataPins(uint8_t db7, uint8_t db6, uint8_t db5, uint8_t db4, uint8_t db3, uint8_t db2, uint8_t db1, uint8_t db0) {
 
   //DB7
-    GPIOPinWrite(port_F, GPIO_PIN_4, db7 * pin_4);
+  GPIOPinWrite(port_F, GPIO_PIN_4, db7 * pin_4);
 
   //DB6
-    GPIOPinWrite(port_A, GPIO_PIN_2, db6 * pin_2);
+  GPIOPinWrite(port_A, GPIO_PIN_2, db6 * pin_2);
 
   //DB5
-    GPIOPinWrite(port_C, GPIO_PIN_4, db5 * pin_4);
+  GPIOPinWrite(port_C, GPIO_PIN_4, db5 * pin_4);
 
   //DB4
-    GPIOPinWrite(port_A, GPIO_PIN_3, db4 * pin_3);
+  GPIOPinWrite(port_A, GPIO_PIN_3, db4 * pin_3);
 
   //DB3
-    GPIOPinWrite(port_D, GPIO_PIN_6, db3 * pin_6);
+  GPIOPinWrite(port_D, GPIO_PIN_6, db3 * pin_6);
 
   //DB2
-    GPIOPinWrite(port_A, GPIO_PIN_4, db2 * pin_4);
+  GPIOPinWrite(port_A, GPIO_PIN_4, db2 * pin_4);
 
   //DB1
-    GPIOPinWrite(port_C, GPIO_PIN_7, db1 * pin_7);
+  GPIOPinWrite(port_C, GPIO_PIN_7, db1 * pin_7);
 
   //DB0
-    GPIOPinWrite(port_E, GPIO_PIN_0, db0 * pin_0);
+  GPIOPinWrite(port_E, GPIO_PIN_0, db0 * pin_0);
 
   //Turn On The Clock to activate the commmand
-    enableHL();
+  enableHL();
 
-  }
+}
 
 //Toggle of the enable line
-  void enableHL() {
+void enableHL() {
 
   //Enable high
-    GPIOPinWrite(port_C, GPIO_PIN_6, pin_6);
+  GPIOPinWrite(port_C, GPIO_PIN_6, pin_6);
 
    //Wait 5ms
-    SysCtlDelay(130000);
+  SysCtlDelay(130000);
 
   //Enable low
-    GPIOPinWrite(port_C, GPIO_PIN_6, 0x0);
+  GPIOPinWrite(port_C, GPIO_PIN_6, 0x0);
 
    //Wait 5ms
-    SysCtlDelay(130000);
-  }
+  SysCtlDelay(130000);
+}
 
 
 //Display Initialization
-  void initializeDisplay() {
+void initializeDisplay() {
 
   //RS low
-    GPIOPinWrite(port_C, GPIO_PIN_5, 0x0);
+  GPIOPinWrite(port_C, GPIO_PIN_5, 0x0);
 
   //Function Set
-    writeDataPins(0,0,1,1,1,0,0,0);
+  writeDataPins(0,0,1,1,1,0,0,0);
   //Clear the screen
-    clear_screen();
+  clear_screen();
 
   //Display on/off control
-    set_cursor();  
+  set_cursor();  
 
   //Entry mode set
   writeDataPins(0,0,0,0,0,1,1,0);
-  }
+}
 
-  void set_cursor()
-  {
+void set_cursor()
+{
   //Display on/off control
-    writeDataPins(0,0,0,0,1,1,1,0);
+  writeDataPins(0,0,0,0,1,1,1,0);
 
-  }
+}
 
 //Clear the screen
-  void clear_screen()
-  {
+void clear_screen()
+{
 
  //Clear Display
-   writeDataPins(0,0,0,0,0,0,0,1);
+ writeDataPins(0,0,0,0,0,0,0,1);
 
- }
-
-
-//Write the number of times a button has been pressed
- void counter(int counter) {
-
-  //Write
-  if(flag == 1) {
-
-    flag = 0;
-    
-    //First clear the screen
-    //clear_screen();
-    
-    //Convert number to chars
-    char number[2] = {};
-    int i, current = counter, temp, len;
-    for(i = 0; i < 3; i++ ) {
-      temp = current % 10; //Give me the last digit
-      current = current / 10; //Crop out last digit
-      
-      number[i] = (char)(temp + 48);
-      
-      if(current == 0) {
-        len = i;
-        break;
-      }
-    }
-    GPIOPinWrite(port_C, GPIO_PIN_5, 0x0);
-     // clear_screen();
-      writeDataPins(1,0,0,0,1,0,0,0);
-    
-    for(i = len; i >= 0; i--) {
-
-     //Switch RS to high
-     GPIOPinWrite(port_C, GPIO_PIN_5, pin_5);
-
-     write_char_to_pins(number[i]);
-     
-     //RS low
-     GPIOPinWrite(port_C, GPIO_PIN_5, 0x0);
-     
-   } 
-
- }
 }
 
 //Convert a char and output into data pins
