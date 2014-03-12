@@ -48,16 +48,10 @@ void write_phrases();
 
 void counter(int counter);
 
-void interrupt_handler(void);
-
-void scrolling_wheel(void);
-
 void the_taco_meter(void);
 
 void taco_display(void);
 
-int SIZE = 16;
-int current_list_position = 0;
 int count = 0;
 int flag = 1;
 int frequency = 16000000;
@@ -111,7 +105,9 @@ int main() {
   write_string("Speed = #### RPM");
 
   
-  while(1) { taco_display(); }
+  while(1) { 
+    taco_display(); 
+  }
 
 }
 
@@ -180,8 +176,11 @@ void the_taco_meter(void) {
     }
     current_rpm = (1.0/24) / (delta);
     current_rpm = current_rpm / 60.0;
-  
     speed_change = 1;
+    if(current_rpm > 9999.0){
+      current_rpm = 9999.0;
+    }
+   
 
   }
 
@@ -199,7 +198,7 @@ void change_direction_LCD(int direction)
 
     //Next Display Line
   writeDataPins(1,1,0,0,0,0,0,0);
-    writeDataPins(0,0,0,0,0,0,0,0);
+  writeDataPins(0,0,0,0,0,0,0,0);
 
 
   // GPIOPinWrite(port_C, GPIO_PIN_5, pin_5);
@@ -223,7 +222,6 @@ void change_direction_LCD(int direction)
 }
 
 void taco_display(void) {
-
   //Write to LCD
   if (flag == 1) {
 
@@ -237,7 +235,7 @@ void taco_display(void) {
 
     }
 
-    if(speed_change)
+    if(speed_change && (current_rpm < 1.0))
     {
       speed_change = 0;
       SysCtlDelay(160000);
@@ -250,14 +248,10 @@ void taco_display(void) {
 
 
     }
-
-
-
-
+    
   }
 
   GPIOPinWrite(port_C, GPIO_PIN_5, 0x0);
-
   flag = 0;
 }
 
@@ -371,6 +365,7 @@ void write_string(char *string)
   {
     write_char_to_pins(string[i]);
   }
+  i = 0;
 }
 //Writes strings to the screen
 void write_RPM(char *string)
@@ -382,73 +377,8 @@ void write_RPM(char *string)
     write_char_to_pins(string[i]);
   }
 }
-void interrupt_handler(void)
-{
-  GPIOIntClear(GPIO_PORTF_BASE, GPIO_INT_PIN_2 | GPIO_INT_PIN_3);
-  
-  if(GPIOPinRead(port_F, GPIO_PIN_2) == 0x0) { 
-    count++;
-  } 
-  else if(GPIOPinRead(port_F, GPIO_PIN_3) == 0x0) {
-    count--;
-  }
-  counter(count);
-  flag = 1;
-}
 
-void scrolling_wheel(void) {
 
-  //Pin PF2 represents A and Pin PF3 represents B
-
-  GPIOIntClear(GPIO_PORTF_BASE, GPIO_INT_PIN_2 | GPIO_INT_PIN_3);
-
-  
-  int codex[] = { 0, 1, -1, 0, -1, 0, 0, 1, 1, 0, 0, -1, 0, -1, 1, 0};
-  int temp_binary;
-  
-  
-  //Get a snapshot of the current state of the wheel positions
-  if(GPIOPinRead(port_F, GPIO_PIN_2) == 0x0 && GPIOPinRead(port_F, GPIO_PIN_3) == 0x0) {
-    current_state_a = 0;
-    current_state_b = 0;
-    //count = 1;
-  }
-  else if(GPIOPinRead(port_F, GPIO_PIN_2) == 0x4 && GPIOPinRead(port_F, GPIO_PIN_3) == 0x0) {
-    current_state_a = 1;
-    current_state_b = 0;
-    //count = 3;
-  }
-  else if(GPIOPinRead(port_F, GPIO_PIN_2) == 0x0 && GPIOPinRead(port_F, GPIO_PIN_3) == 0x8) {
-    current_state_a = 0;
-    current_state_b = 1;
-    //count = 4;
-  }
-  else if(GPIOPinRead(port_F, GPIO_PIN_2) == 0x4 && GPIOPinRead(port_F, GPIO_PIN_3) == 0x8) {
-    current_state_a = 1;
-    current_state_b = 1;
-    //count = 2;
-  }
-  
-  if(previous_state_a != -1 && previous_state_b != -1) {
-    //Convert binary to decimal and add to counter variable.
-    //Proper order should be PrevA PrevB NewA NewB
-    temp_binary = (pow(2, 3) * previous_state_a) + (pow(2, 2) * previous_state_b) + (pow(2, 1) * current_state_a) + (pow(2, 0) * current_state_b);
-    
-    current_list_position = current_list_position + codex[temp_binary];
-    
-  }
-  
-  previous_state_a = current_state_a;
-  previous_state_b = current_state_b;
-  
-  //Counter function
-  //counter(count);
-  
-  //Phrases Function
-  write_phrases();
-  
-  flag = 1;
-}
 
 
 
