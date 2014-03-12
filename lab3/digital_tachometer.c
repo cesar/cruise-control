@@ -63,7 +63,8 @@ int flag = 1;
 int frequency = 160000;
 int current_state_a, current_state_b, previous_state_a = -1, previous_state_b = -1, time_a, time_b, direction;
 int direction_change = 0, speed_change = 0, current_direction = 0;
-
+float t1 = 0, t2 = 0, current_rpm, delta;
+int initial_run = 1;
 int main() {
 
   //Enable Peripherals
@@ -88,6 +89,7 @@ int main() {
   TimerLoadSet(TIMER0_BASE, TIMER_A, frequency);
   TimerControlEvent(TIMER0_BASE, TIMER_A, TIMER_EVENT_POS_EDGE);
   TimerEnable(TIMER0_BASE, TIMER_A);
+
   
   //Enable pin for interrupt
   GPIOIntEnable(GPIO_PORTF_BASE, (GPIO_INT_PIN_2 | GPIO_INT_PIN_3));
@@ -162,6 +164,25 @@ void the_taco_meter(void) {
       direction_change = 1;
       current_direction = direction;
     }
+
+    
+      //jump initial value
+      t1 = t2;
+      //Get the current speed
+      t2 = TimerGetValue(TIMER0_BASE, TIMER_A);
+      //conversion
+      t2 = t2 * (6.25) * pow(10, -8);
+      delta = t2 - t1;
+      if(delta < 0){
+        delta +=60;
+      }
+      current_rpm = (1/24) / (delta);
+      current_rpm = current_rpm / 60;
+
+      GPIOPinWrite(port_F, GPIO_PIN_5, pin_5);
+      write_char_to_pins((char)((int)'0') + (int) current_rpm);
+
+    
 
 
     
