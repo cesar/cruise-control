@@ -159,8 +159,8 @@ void initializeDisplay() {
   //Display on/off control
   set_cursor();  
 
-  // //Entry mode set
-  // writeDataPins(0,0,0,0,0,1,1,0);
+  //Entry mode set
+  writeDataPins(0,0,0,0,0,1,1,0);
 }
 
 void set_cursor()

@@ -83,6 +83,10 @@ char *phrases[] = { "Hello World!",
 
 int main() {
 
+
+  SysCtlClockSet(SYSCTL_SYSDIV_5|SYSCTL_USE_PLL|SYSCTL_XTAL_16MHZ|SYSCTL_OSC_MAIN);
+      SysCtlPeripheralEnable(SYSCTL_PERIPH_TIMER0);//1024hz = 15625
+
   //Enable Peripherals
   SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOA); 
   SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOC); 
@@ -110,13 +114,23 @@ int main() {
   //Set interrupt type
   GPIOIntTypeSet(GPIO_PORTF_BASE, (GPIO_PIN_2 | GPIO_PIN_3) , GPIO_BOTH_EDGES);
   
+
+  ////Set up the timer
+    TimerConfigure(TIMER0_BASE, TIMER_CFG_PERIODIC);
+    TimerLoadSet(TIMER0_BASE, TIMER_A,  10000);
+    TimerControlEvent(TIMER0_BASE, TIMER_A, TIMER_EVENT_POS_EDGE);
+    TimerEnable(TIMER0_BASE, TIMER_A);
   //Initialize the display
   initializeDisplay();
   
   //Write phrases
   //write_phrases();
   //Count how many times a button is pressed
-  while(1) {}
+  while(1) {
+
+
+    write_char_to_pins((char) TimerValueGet(TIMER0_BASE, TIMER_A));
+  }
 
 }
 
