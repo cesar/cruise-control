@@ -174,6 +174,7 @@ void the_taco_meter(void) {
     if(delta < 0){
       delta +=60;
     }
+    
     current_rpm = (1.0/24) / (delta);
     current_rpm = current_rpm / 60.0;
     speed_change = 1;
@@ -206,13 +207,13 @@ void change_direction_LCD(int direction)
   if(current_direction == 1)
   {
     GPIOPinWrite(port_C, GPIO_PIN_5, pin_5);
-    write_string("CWise  ");
+    write_string("CWise           ");
   }
 
   if(current_direction == -1)
   {
     GPIOPinWrite(port_C, GPIO_PIN_5, pin_5);
-    write_string("CCWise ");
+    write_string("CCWise          ");
 
   }
 
@@ -235,7 +236,7 @@ void taco_display(void) {
 
     }
 
-    if(speed_change && (current_rpm < 1.0))
+    if(speed_change && (current_rpm > 0.0))
     {
       speed_change = 0;
       SysCtlDelay(160000);
@@ -244,7 +245,9 @@ void taco_display(void) {
       sprintf(rpm, "%f", current_rpm);
 
       GPIOPinWrite(port_C, GPIO_PIN_5, pin_5);
-      write_RPM(rpm);
+      if(rpm[0] != '0'){
+        write_RPM(rpm);
+      }
 
 
     }
