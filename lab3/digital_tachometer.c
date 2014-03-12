@@ -199,7 +199,11 @@ void change_direction_LCD(int direction)
 
     //Next Display Line
   writeDataPins(1,1,0,0,0,0,0,0);
+    writeDataPins(0,0,0,0,0,0,0,0);
 
+
+  // GPIOPinWrite(port_C, GPIO_PIN_5, pin_5);
+  //   write_string("             ");
   if(current_direction == 1)
   {
     GPIOPinWrite(port_C, GPIO_PIN_5, pin_5);
@@ -242,7 +246,7 @@ void taco_display(void) {
       sprintf(rpm, "%f", current_rpm);
 
       GPIOPinWrite(port_C, GPIO_PIN_5, pin_5);
-      write_string(rpm);
+      write_RPM(rpm);
 
 
     }
@@ -358,13 +362,22 @@ void write_char_to_pins(char letter)
   writeDataPins(binary[7], binary[6], binary[5], binary[4], binary[3], binary[2], binary[1], binary[0]);
 
 }
-
 //Writes strings to the screen
 void write_string(char *string)
 {
 
   int i = 0;
   for(i = 0; i < strlen(string) ; i++)
+  {
+    write_char_to_pins(string[i]);
+  }
+}
+//Writes strings to the screen
+void write_RPM(char *string)
+{
+
+  int i = 0;
+  for(i = 0; i < 4; i++)
   {
     write_char_to_pins(string[i]);
   }
