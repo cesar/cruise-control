@@ -108,7 +108,7 @@ int main() {
   //Count how many times a button is pressed
   //RS High
   GPIOPinWrite(port_C, GPIO_PIN_5, pin_5);
-  write_string("Speed = ### RPM");
+  write_string("Speed = #### RPM");
   while(1) { taco_display(); }
 
 }
@@ -169,20 +169,36 @@ void the_taco_meter(void) {
       //jump initial value
       t1 = t2;
       //Get the current speed
-      t2 = TimerGetValue(TIMER0_BASE, TIMER_A);
+      t2 = TimerValueGet(TIMER0_BASE, TIMER_A) %60;
       //conversion
       t2 = t2 * (6.25) * pow(10, -8);
       delta = t2 - t1;
       if(delta < 0){
         delta +=60;
       }
-      current_rpm = (1/24) / (delta);
-      current_rpm = current_rpm / 60;
+      current_rpm = (1.0/24) / (delta);
+      current_rpm = current_rpm / 60.0;
+      if(current_rpm > 999)
+      {
+        current_rpm = 999;
+      }
 
-      GPIOPinWrite(port_F, GPIO_PIN_5, pin_5);
-      write_char_to_pins((char)((int)'0') + (int) current_rpm);
+      speed_change = 1;
+      // GPIOPinWrite(port_F, GPIO_PIN_5, pin_5);
+      // write_char_to_pins((char)((int)'0') + (int) current_rpm);
+      // GPIOPinWrite(port_F, GPIO_PIN_5, 0x0);
 
-    
+      // clear_screen();
+      // // GPIOPinWrite(port_C, GPIO_PIN_5, 0x0);
+      // //   writeDataPins(1,0,0,0,0,0,0,0);
+      // // writeDataPins(1,0,0,0,1,0,0,1);
+
+      // GPIOPinWrite(port_F, GPIO_PIN_5, pin_5);
+
+      // write_char_to_pins((char)((int)'0') + (int) current_rpm);
+      //  // writeDataPins(1,0,0,0,1,0,0,1);
+
+      // GPIOPinWrite(port_F, GPIO_PIN_5, 0x0);
 
 
     
@@ -215,6 +231,7 @@ void change_direction_LCD(int direction)
     write_string("CCWise ");
 
   }
+
   GPIOPinWrite(port_C, GPIO_PIN_5, 0x0);
 
 
@@ -237,13 +254,20 @@ void taco_display(void) {
 
     if(speed_change)
     {
-      GPIOPinWrite(port_F, GPIO_PIN_5, 0x0);
-      writeDataPins(1,0,0,0,1,0,0,1);
+      speed_change = 0;
+      SysCtlDelay(160000);
 
-      GPIOPinWrite(port_F, GPIO_PIN_5, pin_5);
 
-        write_string(""); //Wrtie some speed
-        writeDataPins(1,0,0,0,1,0,0,1);
+      
+
+     //GPIOPinWrite(port_C, GPIO_PIN_5, pin_5);
+
+      //write_char_to_pins((char)(((int) '0') + 123)); //Wrtie some speed
+      counter((int)(current_rpm));
+
+      // GPIOPinWrite(port_C, GPIO_PIN_5, 0x0);
+
+      //   writeDataPins(1,0,0,0,1,0,0,1);
 
       }
 
@@ -251,6 +275,9 @@ void taco_display(void) {
 
 
     }
+
+          GPIOPinWrite(port_C, GPIO_PIN_5, 0x0);
+
     flag = 0;
   }
 
@@ -319,8 +346,8 @@ void taco_display(void) {
   //Display on/off control
     set_cursor();  
 
-  // //Entry mode set
-  // writeDataPins(0,0,0,0,0,1,1,0);
+  //Entry mode set
+  writeDataPins(0,0,0,0,0,1,1,0);
   }
 
   void set_cursor()
@@ -349,12 +376,12 @@ void taco_display(void) {
     flag = 0;
     
     //First clear the screen
-    clear_screen();
+    //clear_screen();
     
     //Convert number to chars
-    char number[16] = {};
+    char number[2] = {};
     int i, current = counter, temp, len;
-    for(i = 0; i < 16; i++ ) {
+    for(i = 0; i < 3; i++ ) {
       temp = current % 10; //Give me the last digit
       current = current / 10; //Crop out last digit
       
@@ -365,7 +392,9 @@ void taco_display(void) {
         break;
       }
     }
-    
+    GPIOPinWrite(port_C, GPIO_PIN_5, 0x0);
+     // clear_screen();
+      writeDataPins(1,0,0,0,1,0,0,0);
     
     for(i = len; i >= 0; i--) {
 
