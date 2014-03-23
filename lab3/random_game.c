@@ -7,17 +7,6 @@
 #include "driverlib/gpio.h" 
 #include "driverlib/timer.h"
 
-// RS -> PC5
-// E -> PC6
-// DB7 -> PF4
-// DB6 -> PA2
-// DB5 -> PC4
-// DB4 -> PA3
-// DB3 -> PD6
-// DB2 -> PA4
-// DB1 -> PC7
-// DB0 -> PE0
-
 uint32_t port_A = GPIO_PORTA_BASE,
 			port_C = GPIO_PORTC_BASE,
 			port_D = GPIO_PORTD_BASE,

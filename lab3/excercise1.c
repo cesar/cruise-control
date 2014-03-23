@@ -47,13 +47,7 @@ int main(void) {
     TimerIntRegister(TIMER0_BASE, TIMER_A, timer_interrupt);
 
     //Loop forever
-    while(1){
-          
-      // if(TimerValueGet(TIMER0_BASE, TIMER_A) == 0){
-      //           GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_2, pin_data);
-      //           pin_data^=0x04;
-      //     }
-         }
+    while(1){}
 }
 
 //Configure the timer interrupt handler

@@ -16,17 +16,6 @@
 
 #include "driverlib/timer.h"
 
-// RS -> PC5
-// E -> PC6
-// DB7 -> PF4
-// DB6 -> PA2
-// DB5 -> PC4
-// DB4 -> PA3
-// DB3 -> PD6
-// DB2 -> PA4
-// DB1 -> PC7
-// DB0 -> PE0
-
 uint32_t port_A = GPIO_PORTA_BASE;
 uint32_t port_C = GPIO_PORTC_BASE;
 uint32_t port_D = GPIO_PORTD_BASE;
@@ -167,13 +156,14 @@ void the_taco_meter(void) {
       //jump initial value
     t1 = t2;
       //Get the current speed
-    t2 = TimerValueGet(TIMER0_BASE, TIMER_A) %60;
+    t2 = TimerValueGet(TIMER0_BASE, TIMER_A)%60;
       //conversion
     t2 = t2 * (6.25) * pow(10, -8);
     delta = t2 - t1;
     if(delta < 0){
       delta +=60;
     }
+    
     current_rpm = (1.0/24) / (delta);
     current_rpm = current_rpm / 60.0;
     speed_change = 1;
@@ -206,13 +196,13 @@ void change_direction_LCD(int direction)
   if(current_direction == 1)
   {
     GPIOPinWrite(port_C, GPIO_PIN_5, pin_5);
-    write_string("CWise  ");
+    write_string("CWise           ");
   }
 
   if(current_direction == -1)
   {
     GPIOPinWrite(port_C, GPIO_PIN_5, pin_5);
-    write_string("CCWise ");
+    write_string("CCWise          ");
 
   }
 
@@ -235,7 +225,7 @@ void taco_display(void) {
 
     }
 
-    if(speed_change && (current_rpm < 1.0))
+    if(speed_change && (current_rpm > 0.0))
     {
       speed_change = 0;
       SysCtlDelay(160000);
@@ -244,7 +234,9 @@ void taco_display(void) {
       sprintf(rpm, "%f", current_rpm);
 
       GPIOPinWrite(port_C, GPIO_PIN_5, pin_5);
-      write_RPM(rpm);
+      if(rpm[0] != '0'){
+        write_RPM(rpm);
+      }
 
 
     }
