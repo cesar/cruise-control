@@ -16,17 +16,6 @@
 
 #include "driverlib/timer.h"
 
-// RS -> PC5
-// E -> PC6
-// DB7 -> PF4
-// DB6 -> PA2
-// DB5 -> PC4
-// DB4 -> PA3
-// DB3 -> PD6
-// DB2 -> PA4
-// DB1 -> PC7
-// DB0 -> PE0
-
 uint32_t port_A = GPIO_PORTA_BASE;
 uint32_t port_C = GPIO_PORTC_BASE;
 uint32_t port_D = GPIO_PORTD_BASE;
@@ -167,7 +156,7 @@ void the_taco_meter(void) {
       //jump initial value
     t1 = t2;
       //Get the current speed
-    t2 = TimerValueGet(TIMER0_BASE, TIMER_A) %60;
+    t2 = TimerValueGet(TIMER0_BASE, TIMER_A)%60;
       //conversion
     t2 = t2 * (6.25) * pow(10, -8);
     delta = t2 - t1;
