@@ -24,7 +24,7 @@ void toggleLED();
 uint32_t b1 = UART1_BASE;
 char lookup_table[] = {'x','1','2','3','x','4', '5', '6','x', '7','8','9','x', '*','0', '#'};
 char key_char = 'x';
-int log_code = 0, code = 0, index_code = 0, counter = 0, temp;
+int log_code = 0, code = 0, index_code = 0, counter = 0, temp, flag = 0;
 
 //Using PB1 as the Output Pin
 
@@ -49,6 +49,9 @@ int main(void) {
 
   SysCtlPeripheralEnable(SYSCTL_PERIPH_TIMER0);//1024hz = 15625
   SysCtlPeripheralEnable(SYSCTL_PERIPH_UART1);
+  GPIOPinTypeGPIOOutput(GPIO_PORTC_BASE, GPIO_PIN_4 | GPIO_PIN_5 | GPIO_PIN_6);
+  GPIOPinTypeGPIOOutput(GPIO_PORTB_BASE, GPIO_PIN_3);
+  GPIOPinTypeGPIOInput(GPIO_PORTA_BASE, GPIO_PIN_5 | GPIO_PIN_6 | GPIO_PIN_7);
   GPIOPinConfigure(GPIO_PB1_U1TX);
   GPIOPinTypeUART(GPIO_PORTB_BASE, GPIO_PIN_1);
   UARTConfigSetExpClk(b1, SysCtlClockGet(), 9600, UART_CONFIG_WLEN_8 | UART_CONFIG_STOP_ONE | UART_CONFIG_PAR_NONE);
@@ -62,6 +65,8 @@ int main(void) {
   frequency = SysCtlClockGet()/2;
 
   changeCursorUnderscore();
+  toggleLED();
+
 
   //Clear Display
   clearDisplay();
@@ -78,11 +83,56 @@ int main(void) {
 
 
   while(1){
-    if(key_char != 'x'){
-      toggleLED();
-      putChar(key_char);
+    if(flag = 1){  
+    //Reset the line read
+      code = 0;
+
+    //Turn on the scan for a line
+      if(counter == 0) GPIOPinWrite(GPIO_PORTB_BASE, GPIO_PIN_3, 0x8);
+      if(counter == 1) GPIOPinWrite(GPIO_PORTC_BASE, GPIO_PIN_4, 0x10);
+      if(counter == 2) GPIOPinWrite(GPIO_PORTC_BASE, GPIO_PIN_5, 0x20);
+      if(counter == 3) GPIOPinWrite(GPIO_PORTC_BASE, GPIO_PIN_6, 0x40);
+
+    //Check which button on the line was pressed
+      if(GPIOPinRead(GPIO_PORTA_BASE, GPIO_PIN_5) == 0x20) {
+        code = 1;
+        temp = log_code;
+      }
+      if(GPIOPinRead(GPIO_PORTA_BASE, GPIO_PIN_6) == 0x40) {
+        code = 2;
+        temp = log_code;
+      }
+      if(GPIOPinRead(GPIO_PORTA_BASE, GPIO_PIN_7) == 0x80) {
+        code = 3;
+        temp = log_code;
+      }
+
+    //Turn off the scan for a line
+      if(counter == 0) GPIOPinWrite(GPIO_PORTB_BASE, GPIO_PIN_3, 0x0);
+      if(counter == 1) GPIOPinWrite(GPIO_PORTC_BASE, GPIO_PIN_4, 0x0);
+      if(counter == 2) GPIOPinWrite(GPIO_PORTC_BASE, GPIO_PIN_5, 0x0);
+      if(counter == 3) GPIOPinWrite(GPIO_PORTC_BASE, GPIO_PIN_6, 0x0);
+
+    //Check the next line on the next run and if overflows, reset
+
+
+    //Calculate the index_code for the lookup table
+      index_code = temp + code;
+      key_char = lookup_table[index_code];
+      log_code = log_code + 4;
+      if(log_code > 12){
+        log_code = 0;
+      }
+
+      counter++;
+      if(counter > 3) counter = 0;
+      if(key_char != 'x'){
+        //toggleLED();
+        putChar(key_char);
       //SysCtlDelay(100000);
-      index_code = 0;
+        index_code = 0;
+      }
+      flag = 0;
     }
   }
 
@@ -90,51 +140,10 @@ int main(void) {
 
 void timer_interrupt(void)
 {
-  TimerIntClear(TIMER0_BASE, TIMER_A);
+  TimerIntClear(TIMER0_BASE, TIMER_TIMA_TIMEOUT);
+  flag = 1;
   
-  //Reset the line read
-    code = 0;
 
-    //Turn on the scan for a line
-    if(counter == 0) GPIOPinWrite(GPIO_PORTB_BASE, GPIO_PIN_3, 0x8);
-    if(counter == 1) GPIOPinWrite(GPIO_PORTC_BASE, GPIO_PIN_4, 0x10);
-    if(counter == 2) GPIOPinWrite(GPIO_PORTC_BASE, GPIO_PIN_5, 0x20);
-    if(counter == 3) GPIOPinWrite(GPIO_PORTC_BASE, GPIO_PIN_6, 0x40);
-
-    //Check which button on the line was pressed
-    if(GPIOPinRead(GPIO_PORTA_BASE, GPIO_PIN_5) == 0x20) {
-      code = 1;
-      temp = log_code;
-    }
-    if(GPIOPinRead(GPIO_PORTA_BASE, GPIO_PIN_6) == 0x40) {
-      code = 2;
-      temp = log_code;
-    }
-    if(GPIOPinRead(GPIO_PORTA_BASE, GPIO_PIN_7) == 0x80) {
-      code = 3;
-      temp = log_code;
-    }
-
-    //Turn off the scan for a line
-    if(counter == 0) GPIOPinWrite(GPIO_PORTB_BASE, GPIO_PIN_3, 0x0);
-    if(counter == 1) GPIOPinWrite(GPIO_PORTC_BASE, GPIO_PIN_4, 0x0);
-    if(counter == 2) GPIOPinWrite(GPIO_PORTC_BASE, GPIO_PIN_5, 0x0);
-    if(counter == 3) GPIOPinWrite(GPIO_PORTC_BASE, GPIO_PIN_6, 0x0);
-    
-    //Check the next line on the next run and if overflows, reset
-    
-
-    //Calculate the index_code for the lookup table
-    index_code = temp + code;
-    key_char = lookup_table[index_code];
-    log_code = log_code + 4;
-    if(log_code > 12){
-      log_code = 0;
-    }
-
-    counter++;
-    if(counter > 3) counter = 0;
-    
 
 }
 
