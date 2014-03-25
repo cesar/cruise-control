@@ -39,7 +39,7 @@ int main(void) {
   while(1) {
     GPIOPinWrite(GPIO_PORTA_BASE, GPIO_PIN_2, 0x00);
     sevenSegWrite(letter);
-    SysCtlDelay(15333333);
+    SysCtlDelay(13333333);
     letter = letter + offset[i];
     if (i == 16) {
       i = i % 16;
