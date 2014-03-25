@@ -10,10 +10,10 @@
 //Using PB3 as the Output Pin
 
 
-int frequency = 60, frecuency2 = 5000;
+int frequency = 60;
 uint8_t pin_0 = 0x1, pin_1 = 0x2,pin_2 = 0x4, pin_3 = 0x8, pin_4 = 0x10, pin_5 = 0x20, pin_6 = 0x40, pin_7 = 0x80;
 int first_digit = 0xF0, second_digit = 0x0F, number = 0x00;
-char lookup_table[] = {'x','1','2','3','x','4', '5', '6','x', '7','8','9','x', '*','0', '#'};
+char lookup_table[] = {'x','1','2','3','x','4', '5', '6','x', '7','8','9','x', 'A','0', 'B'};
 char key_char = 'x', first_char = '0', second_char = '0';
 int log_code = 0, code = 0, index_code = 0, counter = 0, temp, flag = 0;
 
@@ -31,7 +31,6 @@ int main(void) {
   SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOE);
   SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOD);
   SysCtlPeripheralEnable(SYSCTL_PERIPH_TIMER0);
-  SysCtlPeripheralEnable(SYSCTL_PERIPH_TIMER1);
   SysCtlPeripheralEnable(SYSCTL_PERIPH_TIMER2);
   
   //Set the input type
@@ -43,27 +42,18 @@ int main(void) {
   GPIOPinTypeGPIOOutput(GPIO_PORTB_BASE, GPIO_PIN_1 | GPIO_PIN_4);
   GPIOPinTypeGPIOInput(GPIO_PORTA_BASE, GPIO_PIN_5 | GPIO_PIN_6 | GPIO_PIN_7);
 
-frecuency2 = SysCtlClockGet()/2;
-
-
 
 //Timer Configuration
   TimerConfigure(TIMER0_BASE, TIMER_CFG_PERIODIC);
-  TimerConfigure(TIMER1_BASE, TIMER_CFG_PERIODIC);
   TimerConfigure(TIMER2_BASE, TIMER_CFG_PERIODIC);
   TimerControlEvent(TIMER0_BASE, TIMER_A, TIMER_EVENT_POS_EDGE);
-  TimerControlEvent(TIMER1_BASE, TIMER_A, TIMER_EVENT_POS_EDGE);
   TimerControlEvent(TIMER2_BASE, TIMER_A, TIMER_EVENT_POS_EDGE);
   
   // //Timer for the buttons
-  TimerLoadSet(TIMER2_BASE, TIMER_A, frecuency2);
+  TimerLoadSet(TIMER2_BASE, TIMER_A, 1600000);
   TimerEnable(TIMER2_BASE, TIMER_A);
   TimerIntEnable(TIMER2_BASE, TIMER_TIMA_TIMEOUT);
   TimerIntRegister(TIMER2_BASE, TIMER_A, timer_interrupt);
-
-//Timer for the counter
-  TimerLoadSet(TIMER1_BASE, TIMER_A, 50000);
-  TimerEnable(TIMER1_BASE, TIMER_A);
 
     
   while(1) {
@@ -102,7 +92,7 @@ frecuency2 = SysCtlClockGet()/2;
     timer_delay();
 
 
-//     //Buttons
+     //Buttons
     if(flag == 1) {
       //Reset the line read
       code = 0;
@@ -153,12 +143,9 @@ frecuency2 = SysCtlClockGet()/2;
       }
       flag = 0;
       }
+
+
  }
-
-
-
-
-
 }
 
 void timer_delay()
