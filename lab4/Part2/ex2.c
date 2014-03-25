@@ -19,26 +19,27 @@ void sevenSegWrite();
 void writeToPins();
 
 int main(void) {
-
+  SysCtlClockSet(SYSCTL_SYSDIV_5|SYSCTL_USE_PLL|SYSCTL_XTAL_16MHZ|SYSCTL_OSC_MAIN);
+  //Enable the peripherals
   SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOF);
   SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOC);
+  SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOA);
   SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOD);
-  SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOE);
   
-
+  //Set the input type
+  GPIOPinTypeGPIOOutput(GPIO_PORTF_BASE, GPIO_PIN_0 | GPIO_PIN_2 | GPIO_PIN_3 | GPIO_PIN_4);
   GPIOPinTypeGPIOOutput(GPIO_PORTC_BASE, GPIO_PIN_4 | GPIO_PIN_5 | GPIO_PIN_6 | GPIO_PIN_7);
-  GPIOPinTypeGPIOOutput(GPIO_PORTD_BASE, GPIO_PIN_6 | GPIO_PIN_7);
-  GPIOPinTypeGPIOOutput(GPIO_PORTF_BASE, GPIO_PIN_4 | GPIO_PIN_3);
-  GPIOPinTypeGPIOOutput(GPIO_PORTE_BASE, GPIO_PIN_0);
+  GPIOPinTypeGPIOOutput(GPIO_PORTA_BASE, GPIO_PIN_2);
+  GPIOPinTypeGPIOOutput(GPIO_PORTD_BASE, GPIO_PIN_6);  
   
   int offset[] = {0,1,1,1,1,1,1,1,1,1, 8, 1, 1, 1, 1, 1, 1};
   int i = 0;
   char letter = '0';
 
   while(1) {
-    GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_3, pin_3);
+    GPIOPinWrite(GPIO_PORTA_BASE, GPIO_PIN_2, 0x00);
     sevenSegWrite(letter);
-    SysCtlDelay(3000000);
+    SysCtlDelay(15333333);
     letter = letter + offset[i];
     if (i == 16) {
       i = i % 16;
@@ -88,11 +89,9 @@ void sevenSegWrite(char letter) {
 
 void writeToPins(int *numbers) {
 
-  GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_4, pin_4 * numbers[4]);
-  GPIOPinWrite(GPIO_PORTD_BASE, GPIO_PIN_6, pin_6 * numbers[2]);
-  GPIOPinWrite(GPIO_PORTC_BASE, (GPIO_PIN_4 | GPIO_PIN_5 | GPIO_PIN_6 | GPIO_PIN_7) , pin_4 * numbers[5] + pin_5 * numbers[6] + pin_6 * numbers[0] + pin_7 * numbers[1]);
-  GPIOPinWrite(GPIO_PORTE_BASE, GPIO_PIN_0, pin_0 * numbers[3]);
-
+  GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_2 | GPIO_PIN_3, pin_2 * numbers[2] + pin_3 *numbers[3]);
+  GPIOPinWrite(GPIO_PORTD_BASE, GPIO_PIN_6, pin_6 * numbers[5]);
+  GPIOPinWrite(GPIO_PORTC_BASE, (GPIO_PIN_4 | GPIO_PIN_5 | GPIO_PIN_6 | GPIO_PIN_7) , pin_4 * numbers[4] + pin_5 * numbers[0] + pin_6 * numbers[1] + pin_7 * numbers[6]);
 }
 
 
