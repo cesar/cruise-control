@@ -30,7 +30,7 @@ void setup() {
 	ADCSequenceStepConfigure(ADC0_BASE, 0, 5, ADC_CTL_CH0 );
 	ADCSequenceStepConfigure(ADC0_BASE, 0, 6, ADC_CTL_CH0 );
 	ADCSequenceStepConfigure(ADC0_BASE, 0, 7, ADC_CTL_CH0 | ADC_CTL_IE |ADC_CTL_END);
-		ADCSequenceEnable(ADC0_BASE,0);
+	ADCSequenceEnable(ADC0_BASE,0);
 
 
 	Serial.print("initializing");

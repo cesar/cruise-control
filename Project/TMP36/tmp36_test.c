@@ -7,6 +7,13 @@
 #include "driverlib/adc.h"
 
 uint32_t voltage_samples[8];
+uint32_t avg_temp;
+
+void setup_tm36();
+int get_analog_temp();
+void disable_module();
+void enable_module();
+
 
 void setup_tmp36(){
 	//Enable the ADC Module
@@ -41,7 +48,7 @@ int get_analog_temp()
 	while(!ADCIntStatus(ADC0_BASE, 0 , false)){}
 	
 	ADCSequenceDataGet(ADC0_BASE,0, voltage_samples);
-
+	
 	//Add up the samples
 	uint32_t sum = 0;
 	for(int i = 0; i < 8; i ++)
@@ -50,8 +57,6 @@ int get_analog_temp()
 	}
 	//Take out the average and scale it up by 3.3V and divide by the resolution of 12 bits
 	avg_temp= sum/8 * 3300/4096;
-
-
 
 	 int temp_celcius = (avg_temp - 500)/10;
 	 return temp_celcius;

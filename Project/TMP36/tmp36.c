@@ -7,6 +7,12 @@
 #include "driverlib/adc.h"
 
 uint32_t voltage_samples[8];
+uint32_t avg_temp;
+
+void setup_tm36();
+int get_analog_temp();
+void disable_module();
+void enable_module();
 
 void setup_tmp36(){
 	//Enable the ADC Module
