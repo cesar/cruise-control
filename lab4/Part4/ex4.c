@@ -43,9 +43,6 @@ int main(void) {
   GPIOPinTypeGPIOOutput(GPIO_PORTB_BASE, GPIO_PIN_1 | GPIO_PIN_4);
   GPIOPinTypeGPIOInput(GPIO_PORTA_BASE, GPIO_PIN_5 | GPIO_PIN_6 | GPIO_PIN_7);
 
-frecuency2 = SysCtlClockGet()/2;
-
-
 
 //Timer Configuration
   TimerConfigure(TIMER0_BASE, TIMER_CFG_PERIODIC);
