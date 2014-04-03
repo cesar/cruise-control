@@ -2,6 +2,8 @@
 
 #include <stdbool.h>
 
+#include <math.h>
+
 #include "inc/hw_memmap.h"
 
 #include "inc/hw_types.h"
@@ -19,9 +21,9 @@ uint8_t pin_0 = 0x1, pin_1 = 0x2,pin_2 = 0x4, pin_3 = 0x8, pin_4 = 0x10, pin_5 =
 
 uint8_t SLAVE_ADDRESS = 0x4A, POINTER_REGISTER = 0x00; //Address of the SDA pin on the digital thermometer and the pointer address to the temperature register.
 
-uint8_t first_byte, second_byte;
+uint32_t first_byte, second_byte, temperature;
 
-
+int result;
 
 void i2c_setup(void) {
 
@@ -57,13 +59,15 @@ uint8_t i2c_read() {
 
   //Send the pointer address to the TMP102
   I2CMasterDataPut(I2C1_BASE, POINTER_REGISTER); //Place the data
-  I2CMasterControl( I2C1_BASE, I2C_MASTER_CMD_BURST_SEND_START ); //Start the sequence
+  I2CMasterControl( I2C1_BASE, I2C_MASTER_CMD_SINGLE_SEND); //Start the sequence
   while(I2CMasterBusBusy(I2C1_BASE)); //Loop until the bus is no longer busy
 
   //Read the most significant byte
   I2CMasterSlaveAddrSet(I2C1_BASE, SLAVE_ADDRESS, true );
   I2CMasterControl( I2C1_BASE, I2C_MASTER_CMD_SINGLE_RECEIVE );
   while(I2CMasterBusBusy(I2C1_BASE)); //Loop until the bus is no longer busy
+
+  I2CSlaveACKValueSet(SLAVE_ADDRESS, true); //Acknoledge the transfer
 
   first_byte = I2CMasterDataGet(I2C1_BASE);
 
@@ -72,9 +76,24 @@ uint8_t i2c_read() {
   I2CMasterControl( I2C1_BASE, I2C_MASTER_CMD_SINGLE_RECEIVE );
   while(I2CMasterBusBusy(I2C1_BASE));
 
+  I2CSlaveACKValueSet(SLAVE_ADDRESS, true); //Acknoledge the transfer
+
   second_byte = I2CMasterDataGet(I2C1_BASE);
 
-  return second_byte;
+  //We only care about the first 3 nibbles
+  second_byte = (second_byte & 0xF0) >> 4;
+
+  temperature = first_byte;
+  temperature = temperature << 4;
+  temperature = temperatire | second_byte;
+
+
+  result = temperature;
+
+  //Temperature conversion
+  result = result * 0.0628;
+
+  return result;
 
 }
 
