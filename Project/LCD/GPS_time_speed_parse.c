@@ -77,34 +77,51 @@ void loop(){
 	
 	
 	getTime();
-	printTime();
 	counter = 0;
 	
-	//char_check = (char) UARTCharGet(b5);
+	// char_check = (char) UARTCharGet(b5);
 	// if(char_check == '$') Serial.print('\n');
 	// Serial.print(char_check);
 }
 
 void getTime(){
 	char temp;
-	for(int i = 0; temp != '*'; i++){
+	while((char) UARTCharGet(b5) != '$'){}
+	for(int i = 0; temp != '$' && i < 100; i++){
 		temp = (char) UARTCharGet(b5);
+		// Serial.print(i);
+		// Serial.print(' ');
+		// Serial.print(temp);
+		// Serial.print('\n');
 		data_string[i] = temp;
 	}
-	if((data_string[0] == '$') && (data_string[1] == 'G') && (data_string[2] == 'P') && (data_string[3] == 'R') && (data_string[4] == 'M') && (data_string[5] == 'C')){
-		if(data_string[7] == ','){
+	if((data_string[2] == 'R') && (data_string[3] == 'M') && (data_string[4] == 'C')){
+		if(data_string[6] == ','){
+			Serial.print("Time not found.\n");
 			return;
 		}
-		int i = 0, j = 7;
-		while(i < 6){
-			UTCTime[i] = data_string[j];
-			i++;
-		}
+		UTCTime[0] = data_string[6];
+		UTCTime[1] = data_string[7];
+		UTCTime[2] = data_string[8];
+		UTCTime[3] = data_string[9];
+		UTCTime[4] = data_string[10];
+		UTCTime[5] = data_string[11];
+		printTime();
+
 
 	}
+
 }
 
 void printTime(){
+	if(UTCTime[0] > 0){
+		UTCTime[1] -= 4;
+		if(UTCTime[1] < 0){
+			UTCTime[0]--;
+			UTCTime[1] *= -1;
+			UTCTime[1] += 2;
+		}
+	}
 	for(int i = 0; i < 6; i++){
 		if(i == 2 || i == 4){
 			Serial.print(':');
