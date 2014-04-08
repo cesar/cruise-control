@@ -25,12 +25,15 @@ void toggleLED();
 void printTime();
 void getTime();
 
+void getVelocity();
+void printVelocity();
+
 uint32_t b5 = UART5_BASE;
 
 char data_string[100];
 char UTCTime[7] = "000000";
 char char_check;
-int counter = 0;
+char velocity[7] = "000000";
 
 void setup(){
 	//GPIO enable
@@ -65,8 +68,8 @@ void setup(){
 	disableGSV();
 	disableGSA();
 	disableVTG();
-	coldStartReset();
-	//hotStartReset();
+	//coldStartReset();
+	hotStartReset();
 	//---------- GPS settings ----------//
 
 	Serial.begin(9600);
@@ -77,51 +80,42 @@ void loop(){
 	
 	
 	getTime();
-	counter = 0;
+	getVelocity();//data string is not yet overwritten
 	
-	// char_check = (char) UARTCharGet(b5);
-	// if(char_check == '$') Serial.print('\n');
-	// Serial.print(char_check);
+	//char_check = (char) UARTCharGet(b5);
+	//if(char_check == '$') Serial.print('\n');
+	//Serial.print(char_check);
 }
 
 void getTime(){
 	char temp;
+	//Wait for a new sentence
 	while((char) UARTCharGet(b5) != '$'){}
+	//Pass the information to the string
 	for(int i = 0; temp != '$' && i < 100; i++){
 		temp = (char) UARTCharGet(b5);
-		// Serial.print(i);
-		// Serial.print(' ');
-		// Serial.print(temp);
-		// Serial.print('\n');
 		data_string[i] = temp;
 	}
+	//If the string contains RMC data, place the time into UTCTime
 	if((data_string[2] == 'R') && (data_string[3] == 'M') && (data_string[4] == 'C')){
 		if(data_string[6] == ','){
 			Serial.print("Time not found.\n");
 			return;
 		}
-		UTCTime[0] = data_string[6];
-		UTCTime[1] = data_string[7];
-		UTCTime[2] = data_string[8];
-		UTCTime[3] = data_string[9];
-		UTCTime[4] = data_string[10];
-		UTCTime[5] = data_string[11];
-		printTime();
-
-
+		else{
+			UTCTime[0] = data_string[6];
+			UTCTime[1] = data_string[7];
+			UTCTime[2] = data_string[8];
+			UTCTime[3] = data_string[9];
+			UTCTime[4] = data_string[10];
+			UTCTime[5] = data_string[11];
+			printTime();
+		}
 	}
-
+	//Serial.print(data_string);
 }
 
 void printTime(){
-	if(UTCTime[0] > 0){
-		UTCTime[1] -= 4;
-		if(UTCTime[1] < 0){
-			UTCTime[0]--;
-			UTCTime[1] *= -1;
-			UTCTime[1] += 2;
-		}
-	}
 	for(int i = 0; i < 6; i++){
 		if(i == 2 || i == 4){
 			Serial.print(':');
@@ -129,6 +123,43 @@ void printTime(){
 		Serial.print(UTCTime[i]);
 	}
 	Serial.print('\n');
+}
+
+void getVelocity(){
+	//The eigth segment (after 7th comma) in RMC contains speed in knots
+	int i = 0;
+	int lowerBound = 0;
+
+	//Count the index at which the speed data is at
+	while(i < 7){
+		if(data_string[lowerBound] == ','){
+			i++;
+		}
+		lowerBound++;
+	}
+
+	//We add one to the lower bound to get the position of the speed value
+	lowerBound++;
+
+	//If the next char is another comma, there is no speed data
+	if(data_string[lowerBound] == ','){
+		Serial.print("No speed data available.\n");
+	}
+	else{
+		//Now we get the string containing the speed
+		for(int k = 0; data_string[lowerBound + k] != ','; k++){
+			velocity[k] = data_string[lowerBound + k];
+			//Serial.print('h');
+		}
+		printVelocity();
+	}
+}
+
+void printVelocity(){
+	for(int i = 0; i < 6; i++){
+		Serial.print(velocity[i]);
+	}
+	Serial.print(" knots.\n");
 }
 
 void toggleLED(){
@@ -141,6 +172,8 @@ void toggleLED(){
 
 
 
+
+/****************************************************************************************************************************/
 //SBAS enable and disable
 void enableSBAS(){
 	char enableSBASCommand[16] = {0xB5, 0x62, 0x06, 0x10, 0x08, 0x00, 0x01, 0x03, 0x03, 0x00, 0x51, 0x62, 0x06, 0x00, 0xE3, 0x27};
