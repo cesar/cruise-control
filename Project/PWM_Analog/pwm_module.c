@@ -6,6 +6,7 @@
 #include "driverlib/sysctl.h"
 #include "driverlib/adc.h"
 #include "driverlib/timer.h"
+#include "pwm_module.h"
 
 void analog_out_setup()
 {
@@ -15,7 +16,7 @@ void analog_out_setup()
     GPIOPinTypeTimer(GPIO_PORTB_BASE, GPIO_PIN_6);
 
     //Testing purposes
-    analog_out(1000, 250);
+    analog_out(1000, 900);
 
 }
 void analog_out(uint32_t ui32Period, uint32_t duty_cycle){
@@ -26,9 +27,4 @@ void analog_out(uint32_t ui32Period, uint32_t duty_cycle){
     TimerMatchSet(TIMER0_BASE, TIMER_A, duty_cycle); // PWM
     TimerEnable(TIMER0_BASE, TIMER_A);
 
-}
-//Testing purposes
-int main(void){
-
-    analog_out_setup();
 }

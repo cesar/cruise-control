@@ -12,7 +12,6 @@
 #include "fatfs/diskio.h"
 #include "fatfs/ff.h"
 #include "fatfs/ffconf.h"
-#include "fatfs/global.h"
 #include "fatfs/integer.h"
 #include "driverlib/rom.h"
 #include "driverlib/ssi.h"
@@ -47,8 +46,6 @@ void close()
 }
 void open_datalog(){
 
-    TCHAR* buffer;
-    int i;
     //Open source file
     f_open(&data_log, "datalog.csv", FA_WRITE | FA_OPEN_ALWAYS);
     f_lseek(&data_log, data_log.fsize);
@@ -60,14 +57,25 @@ void open_datalog(){
 
 void open_statuslog()
 {   
+    //Open Status_log File
     f_open(&status_log, "status_log.txt", FA_WRITE | FA_OPEN_ALWAYS);
 }
 
 void write_datalog(char *velocity, char *coordX, char *coordY, char *time_log, char *ambient_temp, char *motor_temp)
 {   
+    //Initial char space
     char row_log[128];
     sprintf(row_log, "%s, %s, %s, %s,%s, %s \n", velocity, coordX, coordY, time_log, ambient_temp, motor_temp);
-    f_write(&data_log, row_log, strlen(row_log), &bw);
+   
+    //Writes to file the data obtained
     f_write(&data_log, row_log, strlen(row_log), &bw);
 }
 
+void setup()
+{
+    setup_microSD();
+    open_datalog();
+    write_datalog("28.1mph", "24.7Latitude", " 21 Long", "1:20:10PM", "28C", "37C");
+    close();
+}
+void loop(){}
