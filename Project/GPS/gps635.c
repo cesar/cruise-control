@@ -20,7 +20,7 @@
 uint32_t b5 = UART5_BASE;
 
 char data_string[100];
-char UTCTime[7] = "000000";
+char UTCTime[8] = "00:00:01";
 char char_check;
 char velocityReading[6];
 char speed[6];
@@ -60,7 +60,11 @@ void enable_GPS()
 	//---------- GPS settings ----------//
 
 }
+char *get_datastring()
+{
 
+	return data_string;
+}
 void listen_GPS()
 {
 	int i;
@@ -87,20 +91,20 @@ void parseTime()
 		if(data_string[6] == ','){
 			UTCTime[0] = '0';
 			UTCTime[1] = '0';
-			UTCTime[2] = '0';
 			UTCTime[3] = '0';
 			UTCTime[4] = '0';
-			UTCTime[5] = '0';
+			UTCTime[6] = '0';
+			UTCTime[7] = '0';
 
 		}
 
 		else{
 			UTCTime[0] = data_string[6];
 			UTCTime[1] = data_string[7];
-			UTCTime[2] = data_string[8];
-			UTCTime[3] = data_string[9];
-			UTCTime[4] = data_string[10];
-			UTCTime[5] = data_string[11];
+			UTCTime[3] = data_string[8];
+			UTCTime[4] = data_string[9];
+			UTCTime[6] = data_string[10];
+			UTCTime[7] = data_string[11];
 		}
 }
 
@@ -135,10 +139,10 @@ void parseVelocity(){
 
 char *getVelocity(){
 	int speedInteger = atoi(velocityReading);//integer in knots
-	float speedMPH = 1.15 * speedInteger;
-	sprintf(speed, "%fMPH", speedMPH);
+	// float speedMPH = 1.15 * speedInteger;
+	// sprintf(speed, "%fMPH", speedMPH);
 
-	return speed;
+	return velocityReading;
 	
 
 }

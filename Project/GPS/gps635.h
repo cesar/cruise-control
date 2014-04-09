@@ -22,7 +22,7 @@ void enable_GPS();
 void setup_GPS();
 void parseTime();
 void listen_GPS();
-
+char *get_datastring();
 char *getVelocity();
 void parseVelocity();
 
