@@ -5,14 +5,12 @@
 #include "driverlib/debug.h"
 #include "driverlib/sysctl.h"
 #include "driverlib/adc.h"
+#include "driverlib/gpio.h"
+
+#include "tmp36.h"
 
 uint32_t voltage_samples[8];
 uint32_t avg_temp;
-
-void setup_tm36();
-int get_analog_temp();
-void disable_module();
-void enable_module();
 
 void setup_tmp36(){
 	//Enable the ADC Module
@@ -50,7 +48,8 @@ int get_analog_temp()
 
 	//Add up the samples
 	uint32_t sum = 0;
-	for(int i = 0; i < 8; i ++)
+	int i = 0;
+	for(i = 0; i < 8; i ++)
 	{
 		sum += voltage_samples[i];
 	}
@@ -59,8 +58,9 @@ int get_analog_temp()
 
 
 
-	 int temp_celcius = (avg_temp - 500)/10;
-	 return temp_celcius;
+	 float temp_celcius = (avg_temp - 500)/10;
+	 int farenheit_temp = (temp_celcius *  9/5) + 32;
+	 return farenheit_temp;
 
 
 }
