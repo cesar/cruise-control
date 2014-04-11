@@ -24,8 +24,8 @@ char UTCTime[8] = "00:00:01";
 char char_check;
 char velocityReading[6];
 char speed[6];
-char latitude[10];//ddmm.mmmmX
-char longitude[10];//ddmm.mmmmX
+char latitude[11];//ddmm.mmmmX
+char longitude[12];//ddmm.mmmmX
 
 void setup_GPS()
 {	
@@ -73,24 +73,27 @@ void listen_GPS()
 	//Wait for a new sentence
 	while((char) UARTCharGet(b5) != '$'){}
 	//Pass the information to the string
-	for(i = 0; temp != '$' && i < 100; i++){
-		temp = (char) UARTCharGet(b5);
-		data_string[i] = temp;
-	}
+		for(i = 0; temp != '$' && i < 100; i++){
+			temp = (char) UARTCharGet(b5);
+			data_string[i] = temp;
+		}
 
-	
-	parseTime();
-	parseVelocity();
-	parseLatitude();
-	parseLongitude();
+		//These functions check for the correct sentence type at the beginning of their execution
+		//Runs with RMC
+		parseTime();
+		//Runs with VTG
+		parseVelocity();
+		//Runs with RMC
+		parseLatitude();
+		//Runs with RMC
+		parseLongitude();
 
-	
+
 }
 
 void parseTime()
 {
 	if((data_string[2] == 'R') && (data_string[3] == 'M') && (data_string[4] == 'C')){
-
 	//If the string contains RMC data, place the time into UTCTime
 		if(data_string[6] == ','){
 			UTCTime[0] = '0';
@@ -99,9 +102,7 @@ void parseTime()
 			UTCTime[4] = '0';
 			UTCTime[6] = '0';
 			UTCTime[7] = '0';
-
 		}
-
 		else{
 			UTCTime[0] = data_string[6];
 			UTCTime[1] = data_string[7];
@@ -113,64 +114,108 @@ void parseTime()
 	}
 }
 
-
 void parseVelocity(){
-	//We have the RMC sentence that contains speed after the seventh comma
-	int commaCounter = 0;
-	int speedIndex;
-	//Count the index at the speed reading
-	for(speedIndex = 0; commaCounter < 7; speedIndex++){
-		//If there is a comma, count until 7
+	if((data_string[2] == 'V') && (data_string[3] == 'T') && (data_string[4] == 'G')){
+
+		//We have the VTG sentence that contains speed after the seventh comma
+		int commaCounter = 0;
+		int speedIndex;
+		//Count the index at the speed reading
+		for(speedIndex = 0; commaCounter < 7; speedIndex++){
+			//If there is a comma, count until 7
+			if(data_string[speedIndex] == ','){
+				commaCounter++;
+			}
+		}
+		//Current speed index is at the comma, we add one to check the next numeric value
+		speedIndex++;
+		int i,k;
+		//If the character at speedIndex is a comma, there is no data available
 		if(data_string[speedIndex] == ','){
-			commaCounter++;
+			for(i = 0; i < 6; i++){
+				velocityReading[i] = '0';
+			}
 		}
-	}
-	//Current speed index is at the comma, we add one to check the next numeric value
-	speedIndex++;
-	int i,k;
-	//If the character at speedIndex is a comma, there is no data available
-	if(data_string[speedIndex] == ','){
-		for(i = 0; i < 6; i++){
-			velocityReading[i] = '0';
-		}
-	}
-	//Else, we write the speed value to the velocityReading string
-	else{
-		for(k = 0; data_string[speedIndex + k] != ','; k++){
-			velocityReading[k] = data_string[speedIndex + k];
+		//Else, we write the speed value to the velocityReading string
+		else{
+			for(k = 0; data_string[speedIndex + k] != ','; k++){
+				velocityReading[k] = data_string[speedIndex + k];
+			}
 		}
 	}
 }
 
 char *getVelocity(){
-	int speedInteger = atoi(velocityReading);//integer in knots
+	//int speedInteger = atoi(velocityReading);//integer in knots
 	// float speedMPH = 1.15 * speedInteger;
 	// sprintf(speed, "%fMPH", speedMPH);
-
 	return velocityReading;
-	
-
 }
+
 char *getTime()
 {
 	return UTCTime;
-
 }
 
 void parseLatitude(){
+	//After third comma
+	if((data_string[2] == 'R') && (data_string[3] == 'M') && (data_string[4] == 'C')){
+		int commaCounter = 0;
+		int latitudeIndex = 0;
+		for(latitudeIndex = 0; commaCounter < 3; latitudeIndex++){
+			if(data_string[latitudeIndex] == ','){
+				commaCounter++
+			}
+		}
+		latitudeIndex++;
+		int i, k;
+		if(data_string[latitudeIndex] == ','){
+			for(i = 0; i < 11; i++){
+				latitude[i] = '0';
+			}
+		}
+		else{
+			for(k = 0; data_string[latitudeIndex + k]; k++){
+				latitude[k] = data_string[latitudeIndex + k];
+			}
 
+		}
+	
+	}
 }
 
 char *getLatitude(){
-
+	return latitude;
 }
 
 void parseLongitude(){
+	//After fifth
+	if((data_string[2] == 'R') && (data_string[3] == 'M') && (data_string[4] == 'C')){
+		int commaCounter = 0;
+		int longitudeIndex = 0;
+		for(longitudeIndex = 0; commaCounter < 5; longitudeIndex++){
+			if(data_string[longitudeIndex] == ','){
+				commaCounter++
+			}
+		}
+		longitudeIndex++;
+		int i, k;
+		if(data_string[longitudeIndex] == ','){
+			for(i = 0; i < 12; i++){
+				longitude[i] = '0';
+			}
+		}
+		else{
+			for(k = 0; data_string[longitudeIndex + k]; k++){
+				longitude[k] = data_string[longitudeIndex + k];
+			}
 
-}
+		}
+	
+	}
 
 char *getLongitude(){
-
+	return longitude;
 }
 
 void genericReader(){
@@ -217,7 +262,7 @@ void hotStartReset(){
 //Disables RMC, we need RMC to get time and velocity and is enabled defaultly
 void disableRMC(){
 	
-int i;
+	int i;
 	char rmc_data_disable[16] = {0XB5, 0X62, 0X06, 0X01, 0X08, 0X00, 0XF0, 0X04, 0X00, 0X00, 0X00, 0X00, 0X00, 0X01, 0X04, 0X40}; //RMC is the one needed
 	for(i = 0; i < 16; i++){
 		UARTCharPut(b5, rmc_data_disable[i]);
