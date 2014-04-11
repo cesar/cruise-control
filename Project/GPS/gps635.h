@@ -26,6 +26,11 @@ char *get_datastring();
 char *getVelocity();
 void parseVelocity();
 
+void parseLatitude();
+char *getLatitude();
+void parseLongitude();
+char *getLongitude();
+
 void genericReader();
 #ifdef __cplusplus
 }
