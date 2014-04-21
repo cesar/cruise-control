@@ -8,23 +8,24 @@ typedef struct{
 	double iState; //Integrator State
 	double iMax, iMin;
 	double setVelocity;
+	double previous_error;
+	double dt; //Time Change
+
 
 	double iGain, //Integral gain
 			pGain, //Proportional Gain
 			dGain; //Derivative gain
 
 } SPid;
-double UpdatePID(SPid * pid, double velocity, double inclination)
+
+double UpdatePID(SPid * pid, double process_velocity, double inclination)
 {
 
-	double error = (pid -> setVelocity) - velocity;
+	double error = (pid -> setVelocity) - process_velocity;
 
 
-	double pTerm,
-			dTerm,
-			iTerm;
+	double proportional_term, integral_term, derivative_term;
 	//Calculate Proportional term
-	pTerm = pid ->pGain*error;
 
 	//Calculate the integral state with appropriate limiting
 	// pid -> iState += error;
@@ -33,9 +34,18 @@ double UpdatePID(SPid * pid, double velocity, double inclination)
 	// {
 	// 	pid -> iState = pid -> iMin;
 	// }
+	//Calculate proportional term
+	proportional_term = pid ->pGain*error;
 
-	iTerm = pid -> iGain * iState; //Calculate Integral term
-	dTerm = pid -> dGain * (velocity -pid -> dState); //Calculate derivative Term
-	pid -> dState = velocity; //Current speed
-	return pTerm + iTerm - dTerm;
+	//Calculate integral term
+	pid->iState += error * pid-> dt;
+	integral_term = (pid->iGain) * pid->iState;
+
+	//Calculate derivative term
+	derivative_term = (pid ->dGain)*(error - pid-> previous_error)/(pid->dt); //Calculate derivative Term
+	
+	double output = proportional_term + integral_term + derivative_term;
+	pid -> previous_error = error;
+
+	return output;
 }

@@ -6,8 +6,8 @@ extern "C"
 {
 #endif
 
-void analog_out_setup()
-void analog_out(uint32_t ui32Period, uint32_t duty_cycle);
+void setup_pwm();
+void pwm_out(uint32_t ui32Period, uint32_t duty_cycle);
 
 #ifdef __cplusplus
 }
