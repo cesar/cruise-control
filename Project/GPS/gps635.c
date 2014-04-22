@@ -164,7 +164,7 @@ void parseLatitude(){
 		int latitudeIndex = 0;
 		for(latitudeIndex = 0; commaCounter < 3; latitudeIndex++){
 			if(data_string[latitudeIndex] == ','){
-				commaCounter++
+				commaCounter++;
 			}
 		}
 		latitudeIndex++;
@@ -195,7 +195,7 @@ void parseLongitude(){
 		int longitudeIndex = 0;
 		for(longitudeIndex = 0; commaCounter < 5; longitudeIndex++){
 			if(data_string[longitudeIndex] == ','){
-				commaCounter++
+				commaCounter++;
 			}
 		}
 		longitudeIndex++;
@@ -213,6 +213,7 @@ void parseLongitude(){
 		}
 	
 	}
+}
 
 char *getLongitude(){
 	return longitude;

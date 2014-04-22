@@ -40,30 +40,40 @@ int main(void)
 	char temp[3];
 	while(1)
 	{	
-		SysCtlDelay(5266666);
+		setup_microSD();
 
 		//Listen for the GPS Data
-		// listen_GPS();
+		listen_GPS();
 
 		//Wait one second
-
+		SysCtlDelay(SysCtlClockGet() * 1/3);
 		//Select Line One
 		selectLineOne();
-		// char *gps_speed = getVelocity();
+	
+		
+
+		char* velocity;
+		velocity = getVelocity();
+		putPhrase("Vel: ");
+		putPhrase(velocity);
+		putPhrase("K");		
+
+
+		selectLineTwo();
+
 		int i = get_analog_temp();
 		sprintf(temp, "%i", i);
 
 		char digi_temp[3];
 		int j = getTemperature();
 		sprintf(digi_temp, "%i", j);
-
 		//Print temperature to LCD
-		putPhrase("Ana Temp: ");
+		putPhrase("M: ");
 		putPhrase(temp);
+		putPhrase(", ");
 
-		selectLineTwo();
 		//Print digital temperature to LCD
-		putPhrase("Dig Temp: ");
+		putPhrase("E: ");
 		putPhrase(digi_temp);
 
 		//Print velocity in LCD
@@ -72,7 +82,7 @@ int main(void)
 
 		
 		// char *gps_time = getTime();
-		write_datalog("32MPH", "32.2", "32.2", "3:12:00PM", temp, digi_temp);
+		write_datalog(velocity, getLongitude(), getLatitude(), getTime(), temp, digi_temp);
 		close();
 	}
 }

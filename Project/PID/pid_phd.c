@@ -41,10 +41,9 @@ void setup()
 
 	SPid pid;
     
-    // pid = (SPid){ .iGain = 0, .pGain = 2.3, .dGain = 0, .iState = 0, .pre_error = 0};
-    pid.iGain = 0;
-    pid.pGain = 1.3;
-    pid.dGain = 0;
+    pid.iGain = 3.15; //
+    pid.pGain = 0.63; //
+    pid.dGain = 0.315; //
     pid.iState = 0;
     pid.pre_error = 0;
 
@@ -55,17 +54,20 @@ void setup()
 
 	int f_counter =0;
 	char data_out[10];
-	while(f_counter <300)
+	while(f_counter <80)
 	{
         
-		if(f_counter > 150 && (int)PV == 50) PV = 47.00;
+		if(f_counter == 20){ PV = 47.00;}
+		if(f_counter == 40){ PV = 55.00;}
+				if(f_counter == 60){ setpoint_velocity = 40;}
+
+
+
+
 		sprintf(data_out, "%f , %f",(f_counter * 100.00), PV);
         Serial.println(data_out);
-		float output = UpdatePID(&pid, setpoint_velocity-PV, 100);
-   		PV += output;
-
-		
-
+		float output = UpdatePID(&pid, setpoint_velocity-PV, 0.1);
+   		PV += (output);
 		f_counter++;
 		
         
