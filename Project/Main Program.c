@@ -23,6 +23,11 @@
 #include "microsd/fatfs/ffconf.h"
 #include "microsd/fatfs/integer.h"
 
+//Global variables
+int velocity, enableSys;
+
+void bHandler(void);
+
 int main(void)
 {
 	//========= Peripheral Enable and Setup ===========//
@@ -31,6 +36,13 @@ int main(void)
 	setup_GPS(); //GPS Pin Setup
 	setup_microSD(); //MicroSD Pin Setup
 	setupTMP102(); //TMP102 DIgital Thermometer Setup
+
+	//Setup the buttons
+	SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOF);
+  	GPIOPinTypeGPIOInput(GPIO_PORTF_BASE, GPIO_PIN_1 | GPIO_PIN_2 | GPIO_PIN_4);
+	GPIOIntEnable(GPIO_PORTF_BASE, (GPIO_INT_PIN_1 | GPIO_INT_PIN_2 | GPIO_INT_PIN_4));
+	GPIOIntRegister(GPIO_PORTF_BASE, bHandler);
+	GPIOIntTypeSet(GPIO_PORTF_BASE, (GPIO_PIN_1 | GPIO_PIN_2 | GPIO_INT_PIN_4) , GPIO_RISING_EDGE);
 
 
 	//========= Peripheral enable and run ============//
@@ -99,3 +111,25 @@ void lcd_test()
 // 	 ROM_SysCtlPeripheralClockGating(true);
 
 // }
+
+void bHandler(void) {
+    GPIOIntClear(GPIO_PORTF_BASE, GPIO_INT_PIN_1 | GPIO_INT_PIN_2 | GPIO_INT_PIN_4);
+
+    //Increase velocity
+    if(GPIOPinRead(GPIO_PORTF_BASE, GPIO_PIN_1) == GPIO_PIN_1) {
+
+    }
+    //Decrease velocity
+    if(GPIOPinRead(GPIO_PORTF_BASE, GPIO_PIN_2) == GPIO_PIN_2) {
+
+    }
+    //Enable Disable
+    if(GPIOPinRead(GPIO_PORTF_BASE, GPIO_PIN_4) == GPIO_PIN_4) {
+   	if(enableSys == 1) {
+        enableSys = 0;
+      }
+      else {
+        enableSys = 1;
+      }
+    }
+}
