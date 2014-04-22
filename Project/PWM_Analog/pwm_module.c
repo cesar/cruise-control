@@ -8,20 +8,19 @@
 #include "driverlib/timer.h"
 #include "pwm_module.h"
 
-void analog_out_setup()
+void setup_pwm()
 {
     
     SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOB);
     GPIOPinConfigure(GPIO_PB6_T0CCP0);
     GPIOPinTypeTimer(GPIO_PORTB_BASE, GPIO_PIN_6);
+    SysCtlPeripheralEnable(SYSCTL_PERIPH_TIMER0);
 
-    //Testing purposes
-    analog_out(1000, 900);
 
 }
-void analog_out(uint32_t ui32Period, uint32_t duty_cycle){
 
-    SysCtlPeripheralEnable(SYSCTL_PERIPH_TIMER0);
+void pwm_out(uint32_t ui32Period, uint32_t duty_cycle)
+{
     TimerConfigure(TIMER0_BASE, TIMER_CFG_SPLIT_PAIR|TIMER_CFG_A_PWM);
     TimerLoadSet(TIMER0_BASE, TIMER_A, ui32Period -1);
     TimerMatchSet(TIMER0_BASE, TIMER_A, duty_cycle); // PWM

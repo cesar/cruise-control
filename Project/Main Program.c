@@ -12,7 +12,9 @@
 
 #include "lcd/ser_lcd.h" //LCD Header File
 #include "tmp36/tmp36.h" //Tmp36 Header
+#include "tmp102/tmp102.h" //Tmp102 Header
 #include "gps/gps635.h" //GPS Header File
+// #include "pwm_module/pwm_module.h" //PWM Header File
 
 //Micro SD Includes
 #include "microsd/microSD.h"
@@ -28,41 +30,62 @@ int main(void)
 	setup_tmp36(); //TMP36 ADC thermometer setup
 	setup_GPS(); //GPS Pin Setup
 	setup_microSD(); //MicroSD Pin Setup
+	setupTMP102(); //TMP102 DIgital Thermometer Setup
 
 
 	//========= Peripheral enable and run ============//
 	open_datalog(); //Open microSD File for data logging
 	enable_LCD(); //Start LCD Commmunication
 	enable_GPS(); //Start GPS Communication
+	char temp[3];
+	while(1)
+	{	
+		SysCtlDelay(5266666);
 
+		//Listen for the GPS Data
+		// listen_GPS();
 
-	selectLineOne();
-	putPhrase("Temp: ");
-	int i = get_analog_temp();
-	char temp[2];
-	sprintf(temp, "%i", i);
-	putPhrase(temp);
-	write_datalog("32MPH", "23", "31", "12:24AM", temp, "38");
-	close();
+		//Wait one second
 
-	while(1){
-		SysCtlDelay(1333333);
+		//Select Line One
+		selectLineOne();
+		// char *gps_speed = getVelocity();
+		int i = get_analog_temp();
+		sprintf(temp, "%i", i);
+
+		char digi_temp[3];
+		int j = getTemperature();
+		sprintf(digi_temp, "%i", j);
+
+		//Print temperature to LCD
+		putPhrase("Ana Temp: ");
+		putPhrase(temp);
 
 		selectLineTwo();
+		//Print digital temperature to LCD
+		putPhrase("Dig Temp: ");
+		putPhrase(digi_temp);
 
-		listen_GPS();
+		//Print velocity in LCD
+		// putPhrase(" V: ");
+		// putPhrase(gps_speed);
 
-		char *gps_time = getTime();
-		putPhrase(gps_time);
-
-		char *gps_speed = getVelocity();
-		selectLineOne();
-		putPhrase(temp);
-		putPhrase(" ");
-		putPhrase(gps_speed);
+		
+		// char *gps_time = getTime();
+		write_datalog("32MPH", "32.2", "32.2", "3:12:00PM", temp, digi_temp);
+		close();
 	}
-
-
-
-
 }
+void lcd_test()
+{
+	clearDisplay();
+	putPhrase("Hello World!");
+}
+
+// void setup_SleepMode()
+// {
+// 	//Setup the peripherals that are enabled in sleep mode
+// 	 ROM_SysCtlPeripheralSleepEnable(SYSCTL_PERIPH_GPIOF);
+// 	 ROM_SysCtlPeripheralClockGating(true);
+
+// }

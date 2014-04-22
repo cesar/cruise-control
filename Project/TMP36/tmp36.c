@@ -10,7 +10,7 @@
 #include "tmp36.h"
 
 uint32_t voltage_samples[8];
-uint32_t avg_temp;
+float avg_temp;
 
 void setup_tmp36(){
 	//Enable the ADC Module
@@ -55,12 +55,12 @@ int get_analog_temp()
 	}
 	//Take out the average and scale it up by 3.3V and divide by the resolution of 12 bits
 	avg_temp= sum/8 * 3300/4096;
+	
+	
 
-
-
-	 float temp_celcius = (avg_temp - 500)/10;
+	 int temp_celcius = (avg_temp - 500)/10;
 	 int farenheit_temp = (temp_celcius *  9/5) + 32;
-	 return farenheit_temp;
+	 return temp_celcius;
 
 
 }

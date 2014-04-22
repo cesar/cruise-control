@@ -2,11 +2,16 @@
 #include <stdbool.h>
 #include "inc/hw_memmap.h"
 #include "inc/hw_types.h"
+#include "driverlib/pin_map.h"
 #include "driverlib/sysctl.h"
 #include "driverlib/gpio.h"
 #include "driverlib/i2c.h"
 
 #include "tmp102.h"
+
+#define GPIO_PA6_I2C1SCL        0x00001803
+#define GPIO_PA7_I2C1SDA        0x00001C03
+
 
 uint8_t SLAVE_ADDRESS = 0x48,  POINTER_REGISTER = 0x00; //Address of the SDA pin on the digital thermometer and the pointer address to the temperature register.
 
@@ -34,7 +39,7 @@ void setupTMP102() {
 
   //Set pointer register to the temperature register
   I2CMasterSlaveAddrSet(I2C1_BASE, SLAVE_ADDRESS, false );
-  I2CMasterDataPut(I2C1_BASE, POINTER_REGISTER)
+  I2CMasterDataPut(I2C1_BASE, POINTER_REGISTER);
   I2CMasterControl( I2C1_BASE, I2C_MASTER_CMD_SINGLE_SEND);
   while(I2CMasterBusBusy(I2C1_BASE));
 
