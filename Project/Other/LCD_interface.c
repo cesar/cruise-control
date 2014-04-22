@@ -24,21 +24,15 @@ int main(void){
 	GPIOPinConfigure(GPIO_PB1_U1TX);
 	GPIOPinTypeGPIOOutput(GPIO_PORTF_BASE, GPIO_PIN_1);
 	GPIOPinTypeUART(GPIO_PORTB_BASE, GPIO_PIN_1);
-	//Initialize the UART. UART is base 7 in PE1.
-	//Baud rate - Data bits - turn off parity - stop bits --- 9600 - 8 - Off - 1
 	UARTConfigSetExpClk(b1, SysCtlClockGet(), 9600, UART_CONFIG_WLEN_8 | UART_CONFIG_STOP_ONE | UART_CONFIG_PAR_NONE);
 	UARTEnable(b1);
 	toggleLED();
 	changeCursorUnderscore();
-	//Write "Hello World!" on the LCD screen
-	//UARTCharPut(UART7_BASE, ser_lcd_command);
+	
 	
 	//Clear Display
 	clearDisplay();		
 	putPhrase("Hello World!");
-	while(1){
-		if (UARTCharsAvail(UART1_BASE)) UARTCharPut(UART1_BASE, UARTCharGet(UART1_BASE));
-	}
 }
 
 void putChar(char character){
@@ -48,7 +42,7 @@ void putChar(char character){
 
 void putPhrase(char *string){
 	int i;
-	for(i = 0; i < 12; i++){
+	for(i = 0; i < strlen(string); i++){
 		putChar(string[i]);
 	}
 }
