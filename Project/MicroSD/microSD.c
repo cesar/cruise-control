@@ -24,41 +24,32 @@ UINT br,bw;
 
 
 void setup_microSD()
-{       
-    Serial.println("Mounting");
+{   
     //Mount the FatFS System
     f_mount(0, &fs);
+    
 
-   
-
- 
 }
 
 void close()
-{       Serial.println("Closing");
-
+{
     // Close all files
-    // f_close(&status_log);
+    f_close(&status_log);
     f_close(&data_log);
     f_mount(0, NULL);
-    Serial.println("Closed");
 
 
 }
 void open_datalog(){
 
     //Open source file
-  int j =  f_open(&data_log, "datalog.csv", FA_WRITE | FA_OPEN_ALWAYS);
-   
-   Serial.println(j);
-   j =  f_lseek(&data_log, data_log.fsize);
-Serial.println(j);
+    f_open(&data_log, "datalog.csv", FA_WRITE | FA_OPEN_ALWAYS);
+    f_lseek(&data_log, data_log.fsize);
+
     //Data Separation
     char end_line[2] = "\n";
-   j = f_write(&data_log, end_line , sizeof(end_line) , &bw);
-   Serial.println(j);
-
-    }
+    f_write(&data_log, end_line , sizeof(end_line) , &bw);
+}
 
 void open_statuslog()
 {   
@@ -73,20 +64,14 @@ void write_datalog(char *velocity, char *coordX, char *coordY, char *time_log, c
     sprintf(row_log, "%s, %s, %s, %s,%s, %s \n", velocity, coordX, coordY, time_log, ambient_temp, motor_temp);
    
     //Writes to file the data obtained
-   int j= f_write(&data_log, row_log, strlen(row_log), &bw);
-   Serial.println(j);
+    f_write(&data_log, row_log, strlen(row_log), &bw);
 }
 
 void setup()
 {
-    Serial.begin(9600);
-
-    
+    setup_microSD();
+    open_datalog();
+    write_datalog("28.1mph", "24.7Latitude", " 21 Long", "1:20:10PM", "28C", "37C");
+    close();
 }
-void loop(){
-    delay(1000);
-            setup_microSD();
-
-        open_datalog();
-        close();
-    }
+void loop(){}

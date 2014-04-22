@@ -9,7 +9,6 @@
 
 float setpoint_velocity;
 
-
 float UpdatePID(SPid *pid, float error, float dt)
 {
     
@@ -59,7 +58,7 @@ void setup()
         
 		if(f_counter == 20){ PV = 47.00;}
 		if(f_counter == 40){ PV = 55.00;}
-				if(f_counter == 60){ setpoint_velocity = 40;}
+		if(f_counter == 60){ setpoint_velocity = 40;}
 
 
 
