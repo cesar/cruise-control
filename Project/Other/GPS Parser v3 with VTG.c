@@ -79,8 +79,9 @@ void setup(){
 
 void loop(){
 	
-	getTime();
-	// genericReader();
+	//getTime();
+	genericReader();
+
 	
 }
 
