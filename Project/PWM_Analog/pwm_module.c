@@ -15,8 +15,6 @@ void setup_pwm()
     GPIOPinConfigure(GPIO_PB6_T0CCP0);
     GPIOPinTypeTimer(GPIO_PORTB_BASE, GPIO_PIN_6);
     SysCtlPeripheralEnable(SYSCTL_PERIPH_TIMER0);
-
-
 }
 
 void pwm_out(uint32_t ui32Period, uint32_t duty_cycle)

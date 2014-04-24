@@ -27,12 +27,8 @@ void setup_microSD()
 {   
     //Mount the FatFS System
     f_mount(0, &fs);
+    
 
-    //Open Datalog File
-    open_datalog();
-
-    //Open Status log file
-    open_statuslog();
 }
 
 void close()
