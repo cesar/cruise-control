@@ -1,4 +1,4 @@
-    #include <stdint.h>
+#include <stdint.h>
 
 #include <stdbool.h>
 
@@ -62,25 +62,27 @@ uint32_t i2c_read() {
   first_byte = I2CMasterDataGet(I2C1_BASE);
   I2CSlaveACKValueSet(SLAVE_ADDRESS, true); //Acknoledge the transfer
 
-  I2CMasterSlaveAddrSet(I2C1_BASE, SLAVE_ADDRESS, true );
-  I2CMasterControl( I2C1_BASE, I2C_MASTER_CMD_SINGLE_RECEIVE); //Start the sequence
-  while(I2CMasterBusBusy(I2C1_BASE)); //Loop until the bus is no longer busy
-  second_byte = I2CMasterDataGet(I2C1_BASE);
-  I2CSlaveACKValueSet(SLAVE_ADDRESS, true); //Acknoledge the transfer
+  // I2CMasterSlaveAddrSet(I2C1_BASE, SLAVE_ADDRESS, true );
+  // I2CMasterControl( I2C1_BASE, I2C_MASTER_CMD_SINGLE_RECEIVE); //Start the sequence
+  // while(I2CMasterBusBusy(I2C1_BASE)); //Loop until the bus is no longer busy
+  // second_byte = I2CMasterDataGet(I2C1_BASE);
+  // I2CSlaveACKValueSet(SLAVE_ADDRESS, true); //Acknoledge the transfer
 
-  //We only care about the first 3 nibbles
-  second_byte = (second_byte & 0x00F0) >> 4;
+  // //We only care about the first 3 nibbles
+  // second_byte = (second_byte & 0x00F0) >> 4;
 
-  temperature = first_byte;
-  temperature = temperature << 4;
-  temperature = temperature | second_byte;
+  // temperature = first_byte;
+  // temperature = temperature << 4;
+  // temperature = temperature | second_byte;
 
-  result = temperature;
+  // result = temperature;
 
-  //Temperature conversion
-  result = result * 0.0628;
+  // //Temperature conversion
+  // result = result * 0.0628;
 
-  return result;
+  //return result;
+
+  return first_byte;
 
 }
 
