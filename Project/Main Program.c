@@ -4,17 +4,20 @@
 #include <math.h>
 #include "inc/hw_memmap.h"
 #include "inc/hw_types.h"
+#include "inc/hw_ints.h"
+
 #include "driverlib/sysctl.h"
 #include "driverlib/gpio.h"
 #include "driverlib/uart.h"
-#include "driverlib/rom.h"
 #include "driverlib/ssi.h"
+#include "driverlib/timer.h"
 
-#include "lcd/ser_lcd.h" //LCD Header File
+#include "serlcd/ser_lcd.h" //LCD Header File
 #include "tmp36/tmp36.h" //Tmp36 Header
 #include "tmp102/tmp102.h" //Tmp102 Header
 #include "gps/gps635.h" //GPS Header File
-// #include "pwm_module/pwm_module.h" //PWM Header File
+#include "pwm_module/pwm_module.h" //PWM Header File
+#include "pid/pid.h" //PID Module
 
 //Micro SD Includes
 #include "microsd/microSD.h"
@@ -23,11 +26,18 @@
 #include "microsd/fatfs/ffconf.h"
 #include "microsd/fatfs/integer.h"
 
+
 //Global variables
-int set_velocity, enableSys = 0;
-int incr_speed, decr_speed, obtain_speed;
-char digi_temp[3];
-char temp[3];
+int set_velocity, //Set point velocity variable
+ enableSys = 0,//System enable flag
+ incr_speed,//Increase speed flag
+ decr_speed, //Decrease speed flag
+ obtain_speed; //Start cruise control speed flag
+char digi_temp[3]; //Digital temperature
+char anag_temp[3];	 //Analog temperature
+SPid pid;	//Pid Data structure
+float scaleFactor; //Determined by the motor
+uint32_t period; //Timer interrupt
 
 
 
@@ -39,111 +49,138 @@ int main(void)
 	//========= Peripheral Enable and Setup ===========//
 	setup_LCD(); //LCD Screen setup
 	setup_tmp36(); //TMP36 ADC thermometer setup
+
 	setup_GPS(); //GPS Pin Setup
 	setup_microSD(); //MicroSD Pin Setup
-	setupTMP102(); //TMP102 DIgital Thermometer Setup
+	setupTMP102();
+	setup_PID();
 
 	//Setup the buttons
-	SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOF);
-	SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOB);
-	GPIOPinTypeGPIOInput(GPIO_PORTF_BASE, GPIO_PIN_1 | GPIO_PIN_2 | GPIO_PIN_4);
-	GPIOPinTypeGPIOInput(GPIO_PORTB_BASE, GPIO_PIN_0);
-
-	GPIOIntEnable(GPIO_PORTF_BASE, (GPIO_INT_PIN_1 | GPIO_INT_PIN_2 | GPIO_INT_PIN_4));
-	GPIOIntRegister(GPIO_PORTF_BASE, bHandler);
-	GPIOIntTypeSet(GPIO_PORTF_BASE, (GPIO_PIN_1 | GPIO_PIN_2 | GPIO_INT_PIN_4) , GPIO_FALLING_EDGE);
-
-
-	GPIOIntRegister(GPIO_PORTB_BASE, brakeHandler);
-	GPIOIntEnable(GPIO_PORTB_BASE, GPIO_INT_PIN_0);
-	GPIOIntTypeSet(GPIO_PORTB_BASE, GPIO_PIN_0, GPIO_FALLING_EDGE);
+	
+	setup_buttonInterrupts();
+	sleepEnablePeripherals();
+	setup_timerInterrupt();
 
 	//========= Peripheral enable and run ============//
 	enable_LCD(); //Start LCD Commmunication
 	enable_GPS(); //Start GPS Communication
+	clearDisplay(); //Refresh Display
+
+
 	while(1)
 	{	
-		
+		//Listen for the GPS Data
+		listen_GPS();
 
-		//Wait one second
-		SysCtlDelay(SysCtlClockGet() * 2/3);
+		
+		//Open the datalog file for writing
+		open_datalog();
+
+		//Obtain vehicle speed
+		char velocity[6] = "50";
+		//velocity = getVelocity();
+		// velocity = "50";
+
+		//Analog Temperature Sensor
+		int anag_tempValue = get_analog_temp();
+		sprintf(anag_temp, "%i", anag_tempValue);
+
+		//Digital Temperature Sensor
+		int digi_tempValue = getTemperature();
+		sprintf(digi_temp, "%i", digi_tempValue);
+
+		//BMS Communication
+		//Get BMS Level
+		char battery_percentage[3] = "89";
+
+
+		selectLineOne();
+
+		//Show velocity
+		putPhrase("V:");
+		putPhrase(velocity);
+		
+		//If Cruise Control is on
 		if(enableSys)
 		{	
+			//If initialized
 			if(obtain_speed)
-			{
+			{	//Debouncing
+				SysCtlDelay(533333);
+				obtain_speed = 0;
 				clearDisplay();
 
-				//Get current speed
-				//set_velocity = getVelocity();
-				SysCtlDelay(SysCtlClockGet() * 0.020/3);
-				obtain_speed = 0;
+				//Get set velocity
 				set_velocity = 50;
 			}
 
+			//If driver increases set speed
 			if(incr_speed)
 			{	
-				SysCtlDelay(SysCtlClockGet() * 0.020/3);
+				SysCtlDelay(533333);
+
 				incr_speed = 0;
-				SysCtlDelay(SysCtlClockGet() * 0.020/3);
 				set_velocity += 1;
-
-
-
 			}
-			if(decr_speed)
-			{
-				SysCtlDelay(SysCtlClockGet() * 0.020/3);
+
+			//if driver decresaes set speed
+			else if(decr_speed)
+			{	
+				SysCtlDelay(533333);
 				decr_speed = 0;
-				SysCtlDelay(SysCtlClockGet() * 0.020/3);
 				set_velocity -= 1;
 			}
 
-			setup_microSD();
-			open_datalog();
 
-			//Listen for the GPS Data
-			listen_GPS();
+			//PID Portion of the Main Loop
+			int process_value = atoi(velocity); //Convert String to Int
+			int error = set_velocity - process_value; //Calculate error
+			float u_t = UpdatePID(&pid, error, 1); //Feed error to the PID
+			pwm_out(1000, u_t*scaleFactor); //Scale and output the PID output
 
-			//Select Line One
-			selectLineOne();
+			//Show other essentials to the LCD
+			putPhrase("mph/"); 
 
-			//Outside GPS Enability
-			// char* velocity;
-			// velocity = getVelocity();
-			char velocity[6];
-			sprintf(velocity, "%imph", set_velocity);
-			putPhrase("Vel: ");
-			putPhrase(velocity);
+			char set_point[5];
+			sprintf(set_point, "%imph", set_velocity);
+			putPhrase(set_point);
+			putPhrase(" ON"); //Cruise control on
 
-			//Print velocity in LCD
-			write_datalog(velocity, "", "", "", temp, digi_temp);
-			close();
 		}
+
 		else
 		{
-			SysCtlDelay(SysCtlClockGet() * 0.020/3);
-			clearDisplay();
-			selectLineOne();
-			putPhrase("System Standby");
+			//Spacer
+			putPhrase("mph ");
+			putPhrase("Standby  ");
+
 		}
 
+		//Select bottom line
 		selectLineTwo();
 
-		int i = get_analog_temp();
-		sprintf(temp, "%i", i);
-
-		int j = getTemperature();
-		sprintf(digi_temp, "%i", j);
-
-			//Print temperature to LCD
-		putPhrase("M: ");
-		putPhrase(temp);
-		putPhrase(", ");
-
-			//Print digital temperature to LCD
-		putPhrase("E: ");
+		//Display analog and digital temperatures
+		putPhrase("T:");
+		putPhrase(anag_temp);
+		putPhrase("/");
 		putPhrase(digi_temp);
-	}
+		putPhrase("C  ");
+
+
+		//Show Battery level
+		putPhrase("B:");
+		putPhrase("89%%");
+
+		write_datalog(velocity, getLatitude(), getLongitude(), getTime(), anag_temp, digi_temp, battery_percentage);
+
+		close();
+
+
+		//Put system in low power mode
+		SysCtlSleep();	
+
+
+}
 }
 
 void brakeHandler(){
@@ -180,4 +217,66 @@ void bHandler(void) {
 			obtain_speed = 1;
 		}
 	}
+}
+
+void sleepEnablePeripherals(){
+
+	SysCtlPeripheralSleepEnable(SYSCTL_PERIPH_GPIOA);
+	SysCtlPeripheralSleepEnable(SYSCTL_PERIPH_GPIOB);
+
+  	SysCtlPeripheralSleepEnable(SYSCTL_PERIPH_GPIOC);
+  	SysCtlPeripheralSleepEnable(SYSCTL_PERIPH_GPIOD);
+  	SysCtlPeripheralSleepEnable(SYSCTL_PERIPH_GPIOE);
+
+
+  	SysCtlPeripheralSleepEnable(SYSCTL_PERIPH_SSI0);
+  	SysCtlPeripheralSleepEnable(SYSCTL_PERIPH_I2C1);
+  	SysCtlPeripheralSleepEnable(SYSCTL_PERIPH_I2C2);
+  	SysCtlPeripheralSleepEnable(SYSCTL_PERIPH_UART5);
+
+	SysCtlPeripheralSleepEnable(SYSCTL_PERIPH_UART1);
+	SysCtlPeripheralSleepEnable(SYSCTL_PERIPH_UART3);
+
+	SysCtlPeripheralSleepEnable(SYSCTL_PERIPH_TIMER0);
+	SysCtlPeripheralSleepEnable(SYSCTL_PERIPH_TIMER1);
+
+
+ 	SysCtlPeripheralSleepEnable(SYSCTL_PERIPH_GPIOF);
+  	SysCtlPeripheralClockGating(true);
+
+
+}
+void setup_buttonInterrupts(){
+
+	SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOF);
+	SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOB);
+	GPIOPinTypeGPIOInput(GPIO_PORTF_BASE, GPIO_PIN_1 | GPIO_PIN_2 | GPIO_PIN_4);
+	GPIOPinTypeGPIOInput(GPIO_PORTB_BASE, GPIO_PIN_0);
+
+	GPIOIntEnable(GPIO_PORTF_BASE, (GPIO_INT_PIN_1 | GPIO_INT_PIN_2 | GPIO_INT_PIN_4));
+	GPIOIntRegister(GPIO_PORTF_BASE, bHandler);
+	GPIOIntTypeSet(GPIO_PORTF_BASE, (GPIO_PIN_1 | GPIO_PIN_2 | GPIO_INT_PIN_4) , GPIO_FALLING_EDGE);
+
+}
+
+void setup_timerInterrupt(){
+	SysCtlPeripheralEnable(SYSCTL_PERIPH_TIMER1);
+	period = (SysCtlClockGet());
+	//Timer Configuration
+    TimerConfigure(TIMER1_BASE, TIMER_CFG_PERIODIC);
+
+
+    TimerLoadSet(TIMER1_BASE, TIMER_A, period);
+    TimerEnable(TIMER1_BASE, TIMER_A);
+
+    //Timer Interrupt Enable
+    TimerIntEnable(TIMER1_BASE, TIMER_TIMA_TIMEOUT);
+    TimerIntRegister(TIMER1_BASE, TIMER_A, timer_interrupt);
+	
+}
+
+void timer_interrupt()
+{
+	TimerIntClear(TIMER1_BASE, TIMER_TIMA_TIMEOUT);
+
 }
