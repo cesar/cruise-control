@@ -10,6 +10,8 @@ uint8_t GYRO_SLAVE_ADDRESS = 0x68, ACC_SLAVE_ADDRESS = 0x53;
 
 uint8_t byte_data;
 
+uint32_t gyroX, gyroY, gyroZ, x, y, z;
+
 void i2c_setup(void) {
 
   //Enable the I2C Module
@@ -55,6 +57,9 @@ int i2c_write(uint8_t address, uint8_t data) {
 
   while(I2CMasterBusBusy(I2C2_BASE)); //Loop until the bus is no longer busy
   
+  //Delay
+  SysCtlDelay(5000);
+  
   if(I2CMasterErr(I2C2_BASE) == I2C_MASTER_ERR_NONE) {
     //there was no error
     return 1;
@@ -75,16 +80,62 @@ uint8_t i2c_read(uint8_t address) {
   I2CMasterControl(I2C2_BASE, I2C_MASTER_CMD_SINGLE_RECEIVE);
 
   while(I2CMasterBusBusy(I2C2_BASE)){}; //Loop until the bus is no longer busy
+  
+  //Delay
+  SysCtlDelay(5000);
 
   if(I2CMasterErr(I2C2_BASE) == I2C_MASTER_ERR_NONE) {
     byte_data = I2CMasterDataGet(I2C2_BASE);
     return byte_data;
   } else {
     return 0x00;
-  }
-
-  
+  } 
 }
+
+//Update the register values, constantly keep the latest values in the 
+void update() {
+  //Reset the preset values
+  gyroX = 0x00;
+  gyroY = 0x00;
+  gyroZ = 0x00;
+
+  i2c_write(GYRO_SLAVE_ADDRESS, 0x1D);
+  gyroX = i2c_read(GYRO_SLAVE_ADDRESS);
+
+  i2c_write(GYRO_SLAVE_ADDRESS, 0x1E);
+  gyroX = (gyroX<<8)|i2c_read(GYRO_SLAVE_ADDRESS);
+
+   i2c_write(GYRO_SLAVE_ADDRESS, 0x1F);
+  gyroY = i2c_read(GYRO_SLAVE_ADDRESS);
+
+  i2c_write(GYRO_SLAVE_ADDRESS, 0x20);
+  gyroY = (gyroY<<8)|i2c_read(GYRO_SLAVE_ADDRESS);
+
+   i2c_write(GYRO_SLAVE_ADDRESS, 0x21);
+  gyroZ = i2c_read(GYRO_SLAVE_ADDRESS);
+
+  i2c_write(GYRO_SLAVE_ADDRESS, 0x22);
+  gyroZ = (gyroZ<<8)|i2c_read(GYRO_SLAVE_ADDRESS);
+
+  x = gyroX;
+
+  y = gyroY;
+
+  z = gyroZ;
+}
+
+float getX() {
+  return (float)x / 14.375 ;
+}
+
+float getY() {
+  return (float) y / 14.375;
+}
+
+float getZ() {
+  return (float) z / 14.375 ; 
+}
+//FOR LE TESTING***********************
 
 void setup()
 {
@@ -94,11 +145,17 @@ void setup()
 
 void loop()
 {
+  update();
 
-//  int test = i2c_read();
-  i2c_write(GYRO_SLAVE_ADDRESS,0x1D);
-  delay(500);
-  Serial.println(i2c_read(GYRO_SLAVE_ADDRESS));
+  Serial.print("X : ");
+  Serial.print(getX());
+  Serial.print(" | ");  
+  Serial.print("Y: ");
+  Serial.print(getY());
+  Serial.print(" | ");
+  Serial.print("Z: ");
+  Serial.println(getZ());
+  
   delay(1000);
 }
 
