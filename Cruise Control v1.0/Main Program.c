@@ -28,7 +28,7 @@
 #include "microsd/fatfs/integer.h"
 
 //Global variables
-float set_velocity, //Set point velocity variable
+int set_velocity, //Set point velocity variable
  enableSys = 0,//System enable flag
  incr_speed,//Increase speed flag
  decr_speed, //Decrease speed flag
@@ -36,7 +36,7 @@ float set_velocity, //Set point velocity variable
 char digi_temp[3]; //Digital temperature
 char anag_temp[3];	 //Analog temperature
 SPid pid;	//Pid Data structure
-float scaleFactor = 100; //Determined by the motor
+float scaleFactor; //Determined by the motor
 uint32_t period; //Timer interrupt
 
 void bHandler(void);
@@ -47,13 +47,11 @@ int main(void)
 	setup_LCD(); //LCD Screen setup
 	setup_tmp36(); //TMP36 ADC thermometer setup
 
-
 	setup_GPS(); //GPS Pin Setup
 	setup_microSD(); //MicroSD Pin Setup
 	setupTMP102();  
 	setup_PID(&pid);
 	setupBMS();
-	setup_pwm();
 
 	//Setup the buttons
 	
@@ -79,22 +77,15 @@ int main(void)
 		//Obtain vehicle speed
 		char *velocity;
 		char velocityArray[] = "000";
-		
-		//velocity = velocityArray;
+		velocity = velocityArray;
 		velocity = getVelocity();
 		//Convert string to int
 		int speedInteger = atoi(velocity);
 		//Convert knots to mph
-
-		
 		speedInteger = 1.15 * speedInteger;
 		//Return to string
 		sprintf(velocity, "%i", speedInteger);
 		// velocity = "50";
-		selectLineOne();
-		//Show velocity
-		putPhrase("V:");
-		putPhrase(velocity);
 
 		//Analog Temperature Sensor
 		int anag_tempValue = get_analog_temp();
@@ -108,15 +99,18 @@ int main(void)
 		char load[] = "89";
 		char *load_value;
 		load_value = load;
-		//-------BMS Communication------
+		// //-------BMS Communication------
 		sendStartSequence();
 		getDataString();
 		load_value = getLoad();
-		//------------------------------
+		// //------------------------------
 
+		selectLineOne();
+
+		//Show velocity
+		putPhrase("V:");
+		putPhrase(getVelocity());
 		
-
-			
 		//If Cruise Control is on
 		if(enableSys)
 		{	
@@ -128,7 +122,7 @@ int main(void)
 				clearDisplay();
 
 				//Get set velocity
-				set_velocity = 10;
+				set_velocity = 50;
 			}
 
 			//If driver increases set speed
@@ -149,18 +143,18 @@ int main(void)
 			}
 
 			//==============PID Portion of the Main Loop ==============//
-			float process_value = atof(velocity); //Convert String to Int
-			float error = set_velocity - process_value; //Calculate error
-			float u_t = UpdatePID(&pid, error, 1.0); //Feed error to the PID
+			// float process_value = atof(velocity); //Convert String to Int
+			// float error = set_velocity - process_value; //Calculate error
+			// float u_t = UpdatePID(&pid, error, 1.0); //Feed error to the PID
 			
-			uint32_t duty_cycle = u_t*scaleFactor;
-			if(duty_cycle < 950){
-				duty_cycle = 50;
-			}
-			else if(duty_cycle > 0){
-				duty_cycle = 950;
-			}
-			pwm_out(1000, duty_cycle); //Scale and output the PID output
+			// uint32_t duty_cycle = u_t*scaleFactor;
+			// if(duty_cycle > 950){
+			// 	duty_cycle = 50
+			// }
+			// else if(duty_cycle < 0)
+			// 	duty_cycle = 950;
+			// }
+			// // pwm_out(1000, duty_cycle); //Scale and output the PID output
 
 			//====================================================//
 
@@ -168,7 +162,7 @@ int main(void)
 			putPhrase("mph/"); 
 
 			char set_point[5];
-			sprintf(set_point, "%imph", (int) set_velocity);
+			sprintf(set_point, "%imph", set_velocity);
 			putPhrase(set_point);
 			putPhrase(" ON"); //Cruise control on
 
@@ -195,11 +189,11 @@ int main(void)
 
 		//Show Load level
 		putPhrase("B:");
-		putPhrase(load_value);
-		putPhrase("%");
+		putPhrase("89%");
 
 		
 		write_datalog(velocity, "ddmm.mmmmmmX", "ddmm.mmmmmX", getTime(), anag_temp, digi_temp, load_value);
+
 		close();
 
 		//Put system in low power mode
