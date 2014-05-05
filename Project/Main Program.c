@@ -52,8 +52,8 @@ int main(void)
 
 	setup_GPS(); //GPS Pin Setup
 	setup_microSD(); //MicroSD Pin Setup
-	setupTMP102();
-	setup_PID();
+	setupTMP102();  
+	setup_PID(&pid);
 
 	//Setup the buttons
 	

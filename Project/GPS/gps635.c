@@ -58,7 +58,6 @@ void enable_GPS()
 	disableGLL();
 	disableGSV();
 	disableGSA();
-	disableVTG();
 	//---------- GPS settings ----------//
 
 }
