@@ -18,6 +18,7 @@
 #include "gps/gps635.h" //GPS Header File
 #include "pwm_module/pwm_module.h" //PWM Header File
 #include "pid/pid.h" //PID Module
+#include "bms/bms.h" //Battery Management System
 
 //Micro SD Includes
 #include "microsd/microSD.h"
@@ -25,7 +26,6 @@
 #include "microsd/fatfs/ff.h"
 #include "microsd/fatfs/ffconf.h"
 #include "microsd/fatfs/integer.h"
-
 
 //Global variables
 int set_velocity, //Set point velocity variable
@@ -39,9 +39,6 @@ SPid pid;	//Pid Data structure
 float scaleFactor; //Determined by the motor
 uint32_t period; //Timer interrupt
 
-
-
-
 void bHandler(void);
 
 int main(void)
@@ -54,6 +51,7 @@ int main(void)
 	setup_microSD(); //MicroSD Pin Setup
 	setupTMP102();  
 	setup_PID(&pid);
+	setupBMS();
 
 	//Setup the buttons
 	
@@ -61,24 +59,32 @@ int main(void)
 	sleepEnablePeripherals();
 	setup_timerInterrupt();
 
+	
 	//========= Peripheral enable and run ============//
 	enable_LCD(); //Start LCD Commmunication
 	enable_GPS(); //Start GPS Communication
 	clearDisplay(); //Refresh Display
 
 
+
 	while(1)
 	{	
 		//Listen for the GPS Data
 		listen_GPS();
-
-		
 		//Open the datalog file for writing
 		open_datalog();
 
 		//Obtain vehicle speed
-		char velocity[6] = "50";
-		//velocity = getVelocity();
+		char *velocity;
+		char velocityArray[] = "000";
+		velocity = velocityArray;
+		velocity = getVelocity();
+		//Convert string to int
+		int speedInteger = atoi(velocity);
+		//Convert knots to mph
+		speedInteger = 1.15 * speedInteger;
+		//Return to string
+		sprintf(velocity, "%i", speedInteger);
 		// velocity = "50";
 
 		//Analog Temperature Sensor
@@ -89,16 +95,21 @@ int main(void)
 		int digi_tempValue = getTemperature();
 		sprintf(digi_temp, "%i", digi_tempValue);
 
-		//BMS Communication
 		//Get BMS Level
-		char battery_percentage[3] = "89";
-
+		char load[] = "89";
+		char *load_value;
+		load_value = load;
+		// //-------BMS Communication------
+		sendStartSequence();
+		getDataString();
+		load_value = getLoad();
+		// //------------------------------
 
 		selectLineOne();
 
 		//Show velocity
 		putPhrase("V:");
-		putPhrase(velocity);
+		putPhrase(getVelocity());
 		
 		//If Cruise Control is on
 		if(enableSys)
@@ -106,7 +117,7 @@ int main(void)
 			//If initialized
 			if(obtain_speed)
 			{	//Debouncing
-				SysCtlDelay(533333);
+				//SysCtlDelay(533333);
 				obtain_speed = 0;
 				clearDisplay();
 
@@ -117,7 +128,7 @@ int main(void)
 			//If driver increases set speed
 			if(incr_speed)
 			{	
-				SysCtlDelay(533333);
+				//SysCtlDelay(533333);
 
 				incr_speed = 0;
 				set_velocity += 1;
@@ -126,17 +137,26 @@ int main(void)
 			//if driver decresaes set speed
 			else if(decr_speed)
 			{	
-				SysCtlDelay(533333);
+				//SysCtlDelay(533333);
 				decr_speed = 0;
 				set_velocity -= 1;
 			}
 
+			//==============PID Portion of the Main Loop ==============//
+			// float process_value = atof(velocity); //Convert String to Int
+			// float error = set_velocity - process_value; //Calculate error
+			// float u_t = UpdatePID(&pid, error, 1.0); //Feed error to the PID
+			
+			// uint32_t duty_cycle = u_t*scaleFactor;
+			// if(duty_cycle > 950){
+			// 	duty_cycle = 50
+			// }
+			// else if(duty_cycle < 0)
+			// 	duty_cycle = 950;
+			// }
+			// // pwm_out(1000, duty_cycle); //Scale and output the PID output
 
-			//PID Portion of the Main Loop
-			int process_value = atoi(velocity); //Convert String to Int
-			int error = set_velocity - process_value; //Calculate error
-			float u_t = UpdatePID(&pid, error, 1); //Feed error to the PID
-			pwm_out(1000, u_t*scaleFactor); //Scale and output the PID output
+			//====================================================//
 
 			//Show other essentials to the LCD
 			putPhrase("mph/"); 
@@ -167,14 +187,14 @@ int main(void)
 		putPhrase("C  ");
 
 
-		//Show Battery level
+		//Show Load level
 		putPhrase("B:");
-		putPhrase("89%%");
+		putPhrase("89%");
 
-		write_datalog(velocity, getLatitude(), getLongitude(), getTime(), anag_temp, digi_temp, battery_percentage);
+		
+		write_datalog(velocity, "ddmm.mmmmmmX", "ddmm.mmmmmX", getTime(), anag_temp, digi_temp, load_value);
 
 		close();
-
 
 		//Put system in low power mode
 		SysCtlSleep();	
@@ -198,15 +218,15 @@ void bHandler(void) {
 
 	GPIOIntClear(GPIO_PORTF_BASE, GPIO_INT_PIN_1 | GPIO_INT_PIN_2 | GPIO_INT_PIN_4);
 
-    //Increase velocity
+    //Increase velocity is PF1
 	if(GPIOPinRead(GPIO_PORTF_BASE, GPIO_PIN_1) == 0x0) {
 		incr_speed = 1;
 	}
-    //Decrease velocity
+    //Decrease velocity is PF2
 	if(GPIOPinRead(GPIO_PORTF_BASE, GPIO_PIN_2) == 0x0) {
 		decr_speed = 1;
 	}
-    //Enable Disable
+    //Enable Disable is PF4
 	if(GPIOPinRead(GPIO_PORTF_BASE, GPIO_PIN_4) == 0x0) {
 		
 		if(enableSys == 1) {
@@ -256,6 +276,10 @@ void setup_buttonInterrupts(){
 	GPIOIntEnable(GPIO_PORTF_BASE, (GPIO_INT_PIN_1 | GPIO_INT_PIN_2 | GPIO_INT_PIN_4));
 	GPIOIntRegister(GPIO_PORTF_BASE, bHandler);
 	GPIOIntTypeSet(GPIO_PORTF_BASE, (GPIO_PIN_1 | GPIO_PIN_2 | GPIO_INT_PIN_4) , GPIO_FALLING_EDGE);
+
+	GPIOIntEnable(GPIO_PORTB_BASE, GPIO_INT_PIN_0);
+	GPIOIntRegister(GPIO_PORTB_BASE, brakeHandler);
+	GPIOIntTypeSet(GPIO_PORTB_BASE, GPIO_PIN_0, GPIO_FALLING_EDGE);
 
 }
 

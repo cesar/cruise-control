@@ -18,18 +18,21 @@
 
 
 uint32_t b5 = UART5_BASE;
-
+char velocityReading[] = "000";
+char *velptr;
 char data_string[100];
 char UTCTime[8] = "00:00:01";
 char char_check;
-char velocityReading[6];
-char speed[6];
 char latitude[11];//ddmm.mmmmX
-char longitude[12];//ddmm.mmmmX
+char longitude[12];//ddmm.mmmm
 
-void setup_GPS()
-{	
+void setup_GPS(){	
+	velptr = velocityReading;
+
+	// velocityReading[0] = '0';
+	// velocityReading[1] = '0';
 	SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOE);
+
 
 	//UART enable
 	//GPS UART
@@ -43,8 +46,9 @@ void setup_GPS()
 	//RX, TX to GPS
 	GPIOPinTypeUART(GPIO_PORTE_BASE, GPIO_PIN_4 | GPIO_PIN_5);
 }
-void enable_GPS()
-{
+
+
+void enable_GPS(){
 	//Initialize the UART.
 	//Baud rate - Data bits - turn off parity - stop bits --- 9600 - 8 - Off - 1
 	UARTConfigSetExpClk(b5, SysCtlClockGet(), 9600, UART_CONFIG_WLEN_8 | UART_CONFIG_STOP_ONE | UART_CONFIG_PAR_NONE);
@@ -58,83 +62,41 @@ void enable_GPS()
 	disableGLL();
 	disableGSV();
 	disableGSA();
+	disableVTG();
 	//---------- GPS settings ----------//
 
 }
-char *get_datastring()
-{
+char *get_datastring(){
 	return data_string;
 }
-// void listen_GPS()
-// {
-// 	int i;
-// 	char temp;
-// 	//Wait for a new sentence
-// 	while((char) UARTCharGet(b5) != '$'){}
-// 	//Pass the information to the string
-// 		for(i = 0; temp != '$' && i < 100; i++){
-// 			temp = (char) UARTCharGet(b5);
-// 			data_string[i] = temp;
-// 		}
+void listen_GPS(){	
 
-// 		//These functions check for the correct sentence type at the beginning of their execution
-// 		//Runs with RMC
-// 		parseTime();
-// 		//Runs with VTG
-// 		parseVelocity();
-// 		//Runs with RMC
-// 		parseLatitude();
-// 		//Runs with RMC
-// 		parseLongitude();
-
-
-// }
-
-void listen_GPS(){
-	int i, completion = 0;
-	int timeFlag = 0;
-	int velocityFlag = 0;
-	int latitudeFlag = 0;
-	int longitudeFlag = 0;
-
+	int i;
 	char temp;
-	//Listen to the GPS until all 4 parsing functions have run
-	while(completion == 4){
-		//Wait for a new sentence 
-		while((char) UARTCharGet(b5) != '$'){}//new sentences start at $
-		for(i = 0; temp != '$' && i < 100; i++){
-			temp = (char) UARTCharGet(b5);
-			data_string[i] = temp;
-		}
-		//Runs with RMC
-		if((data_string[2] == 'R') && (data_string[2] == 'M') && (data_string[2] == 'C') && !timeFlag){
-			parseTime();
-			timeFlag = 1;
-			completion++;
-		}
-		//Runs with VTG
-		if((data_string[2] == 'V') && (data_string[3] == 'T') && (data_string[4] == 'G') && !velocityFlag){
-			parseVelocity();
-			velocityFlag = 1;
-			completion++;
-		}
-		//Runs with RMC
-		if((data_string[2] == 'R') && (data_string[2] == 'M') && (data_string[2] == 'C') && !latitudeFlag){
-			parseLatitude();
-			latitudeFlag = 1;
-			completion++;
-		}
-		//Runs with RMC
-		if((data_string[2] == 'R') && (data_string[2] == 'M') && (data_string[2] == 'C') && !longitudeFlag){
-			parseLongitude();
-			longitudeFlag = 1;
-			completion++;
-		}
+	//Wait for a new sentence
+	while((char) UARTCharGet(b5) != '$'){}
+	//Pass the information to the string
+	for(i = 0; temp != '$' && i < 100 ; i++){
+		temp = (char) UARTCharGet(b5);
+		data_string[i] = temp;
 	}
+
+	//These functions check for the correct sentence type at the beginning of their execution
+	//Runs with RMC
+	parseTime();
+	//Runs with RMC
+	//parseVelocity();
+	//Runs with RMC
+	//parseLatitude();
+	//Runs with RMC
+	//parseLongitude();
+
+
 }
-void parseTime()
-{
+
+void parseTime(){
 	if((data_string[2] == 'R') && (data_string[3] == 'M') && (data_string[4] == 'C')){
+
 	//If the string contains RMC data, place the time into UTCTime
 		if(data_string[6] == ','){
 			UTCTime[0] = '0';
@@ -147,23 +109,28 @@ void parseTime()
 		else{
 			UTCTime[0] = data_string[6];
 			UTCTime[1] = data_string[7];
+		//colon
 			UTCTime[3] = data_string[8];
 			UTCTime[4] = data_string[9];
+		//colon
 			UTCTime[6] = data_string[10];
 			UTCTime[7] = data_string[11];
+			velptr[0] = data_string[45];
+			velptr[1] = data_string[46];
+			velptr[2] = data_string[47];
 		}
-	}
+	}	
 }
 
 void parseVelocity(){
-	if((data_string[2] == 'V') && (data_string[3] == 'T') && (data_string[4] == 'G')){
+	if((data_string[2] == 'R') && (data_string[3] == 'M') && (data_string[4] == 'C')){
 
-		//We have the VTG sentence that contains speed after the seventh comma
+		//We have the RMC sentence that contains speed after the seventh comma
 		int commaCounter = 0;
-		int speedIndex;
+		int speedIndex = 0;
 		//Count the index at the speed reading
 		for(speedIndex = 0; commaCounter < 7; speedIndex++){
-			//If there is a comma, count until 7
+		//If there is a comma, count until 7
 			if(data_string[speedIndex] == ','){
 				commaCounter++;
 			}
@@ -172,28 +139,25 @@ void parseVelocity(){
 		speedIndex++;
 		int i,k;
 		//If the character at speedIndex is a comma, there is no data available
-		if(data_string[speedIndex] == ','){
-			for(i = 0; i < 6; i++){
+		if(data_string[14] == ','){
+			for(i = 0; i < 3; i++){
 				velocityReading[i] = '0';
 			}
 		}
 		//Else, we write the speed value to the velocityReading string
 		else{
-			for(k = 0; data_string[speedIndex + k] != ','; k++){
-				velocityReading[k] = data_string[speedIndex + k];
+			for(k = 0; k < 3; k++){
+				velocityReading[k] = data_string[45 + k];
 			}
 		}
-	}
+	}	
 }
 
 char *getVelocity(){
 	//int speedInteger = atoi(velocityReading);//integer in knots
 	// float speedMPH = 1.15 * speedInteger;
-	// sprintf(speed, "%fMPH", speedMPH);
-	char *velret;
-	velret[0] = velocityReading[0];
-	velret[1] = velocityReading[1];
-	return velret;
+	// sprintf(speed, "%fMPH", speedMPH);	
+	return velptr;
 }
 
 char *getTime()
@@ -203,29 +167,26 @@ char *getTime()
 
 void parseLatitude(){
 	//After third comma
-	if((data_string[2] == 'R') && (data_string[3] == 'M') && (data_string[4] == 'C')){
-		int commaCounter = 0;
-		int latitudeIndex = 0;
-		for(latitudeIndex = 0; commaCounter < 3; latitudeIndex++){
-			if(data_string[latitudeIndex] == ','){
-				commaCounter++;
-			}
-		}
-		latitudeIndex++;
-		int i, k;
+	int commaCounter = 0;
+	int latitudeIndex = 0;
+	for(latitudeIndex = 0; commaCounter < 3; latitudeIndex++){
 		if(data_string[latitudeIndex] == ','){
-			for(i = 0; i < 11; i++){
-				latitude[i] = '0';
-			}
+			commaCounter++;
 		}
-		else{
-			for(k = 0; data_string[latitudeIndex + k]; k++){
-				latitude[k] = data_string[latitudeIndex + k];
-			}
-
-		}
-	
 	}
+	latitudeIndex++;
+	int i, k;
+	if(data_string[latitudeIndex] == ','){
+		for(i = 0; i < 13; i++){
+			latitude[i] = '0';
+		}
+	}
+	else{
+		for(k = 0; k < 13; k++){
+			latitude[k] = data_string[latitudeIndex + k];
+		}
+
+	}	
 }
 
 char *getLatitude(){
@@ -234,29 +195,25 @@ char *getLatitude(){
 
 void parseLongitude(){
 	//After fifth
-	if((data_string[2] == 'R') && (data_string[3] == 'M') && (data_string[4] == 'C')){
-		int commaCounter = 0;
-		int longitudeIndex = 0;
-		for(longitudeIndex = 0; commaCounter < 5; longitudeIndex++){
-			if(data_string[longitudeIndex] == ','){
-				commaCounter++;
-			}
-		}
-		longitudeIndex++;
-		int i, k;
+	int commaCounter = 0;
+	int longitudeIndex = 0;
+	for(longitudeIndex = 0; commaCounter < 5; longitudeIndex++){
 		if(data_string[longitudeIndex] == ','){
-			for(i = 0; i < 12; i++){
-				longitude[i] = '0';
-			}
+			commaCounter++;
 		}
-		else{
-			for(k = 0; data_string[longitudeIndex + k]; k++){
-				longitude[k] = data_string[longitudeIndex + k];
-			}
-
-		}
-	
 	}
+	longitudeIndex++;
+	int i, k;
+	if(data_string[longitudeIndex] == ','){
+		for(i = 0; i < 12; i++){
+			longitude[i] = '0';
+		}
+	}
+	else{
+		for(k = 0; k < 14; k++){
+			longitude[k] = data_string[longitudeIndex + k];
+		}
+	}	
 }
 
 char *getLongitude(){
@@ -265,11 +222,7 @@ char *getLongitude(){
 
 void genericReader(){
 	char_check = (char) UARTCharGet(b5);
-	
 }
-
-
-
 
 /****************************************************************************************************************************/
 //SBAS enable and disable
@@ -287,7 +240,6 @@ void disableSBAS(){
 		UARTCharPut(b5, disableSBASCommand[i]);
 	}
 }
-
 //Cold and hot reset, takes into account previous session's ephemeris
 void coldStartReset(){	
 	int i;
@@ -313,7 +265,6 @@ void disableRMC(){
 		UARTCharPut(b5, rmc_data_disable[i]);
 	}
 }
-
 //Disable unneeded NMEA sentences
 void disableGGA(){
 	int i;
@@ -321,8 +272,6 @@ void disableGGA(){
 	for(i = 0; i < 16; i++){
 		UARTCharPut(b5, gga_data_disable[i]);
 	}
-
-
 }
 void disableGLL(){
 	int i;
@@ -330,7 +279,6 @@ void disableGLL(){
 	for(i = 0; i < 16; i++){
 		UARTCharPut(b5, gll_data_disable[i]);
 	}
-
 }
 void disableGSA(){
 	int i;
@@ -338,8 +286,6 @@ void disableGSA(){
 	for(i = 0; i < 16; i++){
 		UARTCharPut(b5, gsa_data_disable[i]);
 	}
-
-
 }
 void disableGSV(){
 	int i;
