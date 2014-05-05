@@ -1,11 +1,3 @@
-#include <stdint.h>
-#include <stdbool.h>
-#include "inc/hw_memmap.h"
-#include "inc/hw_types.h"
-#include "driverlib/sysctl.h"
-#include "driverlib/gpio.h"
-#include "driverlib/i2c.h"
-
 #include "i2c.h"
 #include "acc.h"
 

@@ -6,6 +6,9 @@ extern "C"
 {
 #endif
 
+#define GYRO_SLAVE_ADDRESS 0x68
+
+
 void GyroReadData(int *gyroX, int *gyroY, int *gyroZ);
 void GyroRead(float *gyroX, float *gyroY, float *gyroZ);
 int gyroReset();

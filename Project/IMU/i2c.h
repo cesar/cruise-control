@@ -6,8 +6,8 @@ extern "C"
 {
 #endif
 
-#define GYRO_SLAVE_ADDRESS = 0x68;
-#define ACC_SLAVE_ADDRESS = 0x53;
+
+
 void setup_i2c();
 uint8_t i2c_read(uint8_t address);
 int i2c_write(uint8_t address, uint8_t data);

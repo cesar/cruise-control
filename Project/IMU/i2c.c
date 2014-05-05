@@ -8,9 +8,6 @@
 
 #include "i2c.h"
 
-
-uint8_t byte_data;
-
 void i2c_setup(void) {
 
   //Enable the I2C Module
@@ -73,6 +70,8 @@ int i2c_write(uint8_t address, uint8_t data) {
 * returns - a byte of data read from the slave device
 */
 uint8_t i2c_read(uint8_t address) {
+
+  uint8_t byte_data;
   
   I2CMasterSlaveAddrSet(I2C2_BASE, address, true );
 
